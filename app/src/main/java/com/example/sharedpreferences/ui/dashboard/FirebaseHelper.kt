@@ -1,0 +1,83 @@
+package com.example.sharedpreferences.firebase
+
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.util.*
+
+data class Student(
+    val name: String = "",
+    val studentNumber: String = "",
+    val timestamp: String = ""
+)
+
+class FirebaseHelper {
+    private val firestore = FirebaseFirestore.getInstance()
+
+    suspend fun getAllValidNames(): List<String> {
+        val snapshot = firestore.collection("validStudents").get().await()
+        return snapshot.documents.mapNotNull { it.getString("Name") }
+    }
+
+    suspend fun getAllValidStudentNumbers(): List<String> {
+        val snapshot = firestore.collection("validStudents").get().await()
+        return snapshot.documents.mapNotNull { it.getString("Student Number") }
+    }
+
+    suspend fun getStudentByName(name: String): Student? {
+        val snapshot = firestore.collection("validStudents")
+            .whereEqualTo("Name", name)
+            .get()
+            .await()
+
+        return snapshot.documents.firstOrNull()?.let {
+            Student(
+                name = it.getString("Name") ?: "",
+                studentNumber = it.getString("Student Number") ?: ""
+            )
+        }
+    }
+
+    suspend fun getStudentByNumber(studentNumber: String): Student? {
+        val snapshot = firestore.collection("validStudents")
+            .whereEqualTo("Student Number", studentNumber)
+            .get()
+            .await()
+
+        return snapshot.documents.firstOrNull()?.let {
+            Student(
+                name = it.getString("Name") ?: "",
+                studentNumber = it.getString("Student Number") ?: ""
+            )
+        }
+    }
+
+    suspend fun addStudentToDateCollection(name: String, studentNumber: String, timestamp: String) {
+        val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val collectionName = currentDate
+
+        val newStudent = hashMapOf(
+            "Name" to name,
+            "Student Number" to studentNumber,
+            "Timestamp" to timestamp
+        )
+
+        firestore.collection(collectionName).add(newStudent).await()
+    }
+
+    suspend fun getStudentsFromDateCollection(date: String): List<Student> {
+        val snapshot = firestore.collection(date)
+            .orderBy("Timestamp")
+            .get()
+            .await()
+
+        return snapshot.documents.mapNotNull {
+            val name = it.getString("Name")
+            val studentNumber = it.getString("Student Number")
+            val timestamp = it.getString("Timestamp")
+            if (name != null && studentNumber != null && timestamp != null) {
+                Student(name, studentNumber, timestamp)
+            } else null
+        }
+    }
+}
