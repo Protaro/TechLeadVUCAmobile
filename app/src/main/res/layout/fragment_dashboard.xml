@@ -8,98 +8,18 @@
     android:padding="16dp"
     tools:context="ui.dashboard.DashboardFragment">
 
-    <!-- Section for Input Fields -->
-    <LinearLayout
+    <ToggleButton
+        android:id="@+id/toggleDashboard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginTop="32dp">
+        android:text="toggleDashboard"
+        android:textOff="attendance"
+        android:textOn="measurement" />
 
-        <AutoCompleteTextView
-            android:id="@+id/idEdtName"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:importantForAutofill="yes"
-            android:inputType="textPersonName"
-            android:hint="Name"
-            android:padding="10dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginStart="20dp"
-            android:layout_marginEnd="20dp"
-            tools:ignore="LabelFor,SpeakableTextPresentCheck" />
-
-
-        <AutoCompleteTextView
-            android:id="@+id/idEdtStudentNumber"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:importantForAutofill="yes"
-            android:inputType="textPersonName"
-            android:hint="Student Number"
-            android:padding="10dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginStart="20dp"
-            android:layout_marginEnd="20dp"
-            android:layout_marginBottom="20dp"
-            tools:ignore="LabelFor,SpeakableTextPresentCheck" />
-
-    </LinearLayout>
-
-    <!-- Button to Add Rows -->
-    <Button
-        android:id="@+id/idBtnAddRow"
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/toggleContainer"
+        android:name="com.example.sharedpreferences.ui.dashboard.AttendanceFragment"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Add"
-        android:padding="12dp"
-        android:backgroundTint="@color/my_primary"
-        android:textColor="@android:color/white"
-        android:layout_marginBottom="16dp" />
+        android:layout_height="wrap_content" />
 
-    <!-- Table for Displaying Rows -->
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fillViewport="true">
-
-        <TableLayout
-            android:id="@+id/idTableLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:stretchColumns="*" >
-
-            <!-- Table Header Row -->
-            <TableRow
-                android:background="@color/my_primary">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Name"
-                    android:textStyle="bold"
-                    android:gravity="center"
-                    android:padding="8dp"
-                    android:textColor="@android:color/white" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Student Number"
-                    android:textStyle="bold"
-                    android:gravity="center"
-                    android:padding="8dp"
-                    android:textColor="@android:color/white" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Timestamp"
-                    android:textStyle="bold"
-                    android:gravity="center"
-                    android:padding="8dp"
-                    android:textColor="@android:color/white" />
-            </TableRow>
-
-        </TableLayout>
-    </ScrollView>
 </LinearLayout>
