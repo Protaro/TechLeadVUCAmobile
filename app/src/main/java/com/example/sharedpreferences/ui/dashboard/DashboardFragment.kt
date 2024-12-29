@@ -28,24 +28,15 @@ class DashboardFragment : Fragment() {
         val root: View = binding.root
         val toggleDashboard = binding.toggleDashboard
 
-//       binding.toggleDashboard.setOnCheckedChangeListener { _, isChecked ->
-//           Toast.makeText(requireContext(), if (isChecked) "Measurement" else "Attendance", Toast.LENGTH_SHORT).show()
-//       }
-
         toggleDashboard.setOnCheckedChangeListener { _, checkedId ->
-            if (checkedId) {
-                loadLayout(1)
-            }
-            else {
-                loadLayout(0)
-            }
+            loadLayout(checkedId)
         }
-        loadLayout(0)
+        loadLayout(false)
         return root
     }
 
-    private fun loadLayout(checkedId: Int) {
-        if (checkedId == 1) {
+    private fun loadLayout(checkedId: Boolean) {
+        if (checkedId) {
             val measurementBinding = FragmentMeasurementBinding.inflate(layoutInflater)
             binding.toggleContainer.removeAllViews()
             binding.toggleContainer.addView(measurementBinding.root)

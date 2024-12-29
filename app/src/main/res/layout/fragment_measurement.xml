@@ -9,6 +9,7 @@
     tools:context="ui.dashboard.DashboardFragment">
 
     <!-- Section for Input Fields -->
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -33,14 +34,36 @@
             android:id="@+id/idEdtStudentNumber"
             android:layout_width="match_parent"
             android:layout_height="48dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="20dp"
+            android:hint="Student Number"
             android:importantForAutofill="yes"
             android:inputType="textPersonName"
-            android:hint="Student Number"
             android:padding="10dp"
-            android:layout_marginTop="20dp"
+            tools:ignore="LabelFor,SpeakableTextPresentCheck" />
+
+        <EditText
+            android:id="@+id/idEdtHeight"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
             android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="20dp"
+            android:hint="Height (cm)"
+            android:inputType="numberDecimal"
+            tools:ignore="LabelFor,SpeakableTextPresentCheck" />
+
+        <EditText
+            android:id="@+id/idEdtWeight"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
             android:layout_marginEnd="20dp"
             android:layout_marginBottom="20dp"
+            android:hint="Weight (kg)"
+            android:inputType="numberDecimal"
             tools:ignore="LabelFor,SpeakableTextPresentCheck" />
 
     </LinearLayout>
@@ -89,6 +112,24 @@
                     android:gravity="center"
                     android:padding="8dp"
                     android:textColor="@android:color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:text="Height (cm)"
+                    android:textColor="@android:color/white"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:text="Weight (kg)"
+                    android:textColor="@android:color/white"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"

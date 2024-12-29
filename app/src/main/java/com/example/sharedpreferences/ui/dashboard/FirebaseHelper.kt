@@ -11,6 +11,14 @@ data class Student(
     val timestamp: String = ""
 )
 
+data class StudentMeasurement(
+    val name: String = "",
+    val studentNumber: String = "",
+    val height: Float? = 0f,
+    val weight: Float? = 0f,
+    val timestamp: String = ""
+)
+
 class FirebaseHelper {
     private val firestore = FirebaseFirestore.getInstance()
 
@@ -65,6 +73,20 @@ class FirebaseHelper {
         firestore.collection(collectionName).add(newStudent).await()
     }
 
+    suspend fun addStudentToMeasurementsCollection(name: String, studentNumber: String, timestamp: String, height: Float, weight: Float) {
+        val collectionName = "Measurements"
+
+        val newStudentMeasurement = hashMapOf(
+            "Name" to name,
+            "Student Number" to studentNumber,
+            "Height" to height,
+            "Weight" to weight,
+            "Timestamp" to timestamp
+        )
+
+        firestore.collection(collectionName).add(newStudentMeasurement).await()
+    }
+
     suspend fun getStudentsFromDateCollection(date: String): List<Student> {
         val snapshot = firestore.collection(date)
             .orderBy("Timestamp")
@@ -77,6 +99,24 @@ class FirebaseHelper {
             val timestamp = it.getString("Timestamp")
             if (name != null && studentNumber != null && timestamp != null) {
                 Student(name, studentNumber, timestamp)
+            } else null
+        }
+    }
+
+    suspend fun getStudentsFromMeasurementsCollection(): List<StudentMeasurement> {
+        val snapshot = firestore.collection("Measurements")
+            .orderBy("Timestamp")
+            .get()
+            .await()
+
+        return snapshot.documents.mapNotNull {
+            val name = it.getString("Name")
+            val studentNumber = it.getString("Student Number")
+            val height = it.getDouble("Height")?.toFloat()
+            val weight = it.getDouble("Weight")?.toFloat()
+            val timestamp = it.getString("Timestamp")
+            if (name != null && studentNumber != null && timestamp != null) {
+                StudentMeasurement(name, studentNumber, height, weight, timestamp)
             } else null
         }
     }

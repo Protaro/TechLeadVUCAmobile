@@ -56,6 +56,8 @@ class MeasurementFragment : Fragment() {
         binding.idBtnAddRow.setOnClickListener {
             val name = binding.idEdtName.text.toString().trim()
             val studentNumber = binding.idEdtStudentNumber.text.toString().trim()
+            val height = binding.idEdtHeight.text.toString().trim().toFloat()
+            val weight = binding.idEdtWeight.text.toString().trim().toFloat()
 
             if (name.isNotEmpty() || studentNumber.isNotEmpty()) {
                 CoroutineScope(Dispatchers.Main).launch {
@@ -66,7 +68,7 @@ class MeasurementFragment : Fragment() {
                     }
 
                     if (student != null) {
-                        addStudentToMeasurementTable(student.name, student.studentNumber)
+                        addStudentToMeasurementTable(student.name, student.studentNumber, height, weight)
                     } else {
                         Toast.makeText(
                             requireContext(),
@@ -114,13 +116,13 @@ class MeasurementFragment : Fragment() {
         }
     }
 
-    private fun addStudentToMeasurementTable(name: String, studentNumber: String) {
+    private fun addStudentToMeasurementTable(name: String, studentNumber: String, height: Float, weight: Float) {
         val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
 
         CoroutineScope(Dispatchers.Main).launch {
             try {
-                firebaseHelper.addStudentToDateCollection(name, studentNumber, timestamp)
-                displayInTable(name, studentNumber, timestamp)
+                firebaseHelper.addStudentToMeasurementsCollection(name, studentNumber, timestamp, height, weight)
+                displayInTable(name, studentNumber, height, weight, timestamp)
             } catch (e: Exception) {
                 e.printStackTrace()
                 Toast.makeText(
@@ -136,10 +138,10 @@ class MeasurementFragment : Fragment() {
         CoroutineScope(Dispatchers.Main).launch {
             try {
                 val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-                val students = firebaseHelper.getStudentsFromDateCollection(currentDate)
+                val students = firebaseHelper.getStudentsFromMeasurementsCollection()
 
                 students.forEach { student ->
-                    displayInTable(student.name, student.studentNumber, student.timestamp)
+                    displayInTable(student.name, student.studentNumber, student.height, student.weight, student.timestamp)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -152,7 +154,7 @@ class MeasurementFragment : Fragment() {
         }
     }
 
-    private fun displayInTable(name: String, studentNumber: String, timestamp: String) {
+    private fun displayInTable(name: String, studentNumber: String, height: Float?, weight: Float?, timestamp: String) {
         val tableRow = TableRow(requireContext())
 
         val nameTextView = TextView(requireContext()).apply {
@@ -169,6 +171,20 @@ class MeasurementFragment : Fragment() {
             gravity = Gravity.CENTER
         }
 
+        val heightTextView = TextView(requireContext()).apply {
+            text = height.toString()
+            setPadding(10, 10, 10, 10)
+            textAlignment = View.TEXT_ALIGNMENT_CENTER
+            gravity = Gravity.CENTER
+        }
+
+        val weightTextView = TextView(requireContext()).apply {
+            text = weight.toString()
+            setPadding(10, 10, 10, 10)
+            textAlignment = View.TEXT_ALIGNMENT_CENTER
+            gravity = Gravity.CENTER
+        }
+
         val timestampTextView = TextView(requireContext()).apply {
             text = timestamp
             setPadding(10, 10, 10, 10)
@@ -180,6 +196,8 @@ class MeasurementFragment : Fragment() {
             addView(nameTextView)
             addView(studentNumberTextView)
             addView(timestampTextView)
+            addView(heightTextView)
+            addView(weightTextView)
             gravity = Gravity.CENTER
         }
 
