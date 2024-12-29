@@ -17,12 +17,10 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 /*
-Measurements:
-Name
-Student Number
-Height
-Weight
-*/
+TODO:
+Fix issue with AttendanceFragment and MeasurementFragment not
+being able to communicate with Firebase (PERMISSION_DENIED)
+ */
 
 class MeasurementFragment : Fragment() {
 
@@ -51,7 +49,7 @@ class MeasurementFragment : Fragment() {
         })
 
         setupAutocompleteAdapters()
-        fetchAndDisplayCurrentDateCollection()
+        fetchAndDisplayCurrentMeasurementsCollection()
 
         binding.idBtnAddRow.setOnClickListener {
             val name = binding.idEdtName.text.toString().trim()
@@ -134,10 +132,9 @@ class MeasurementFragment : Fragment() {
         }
     }
 
-    private fun fetchAndDisplayCurrentDateCollection() {
+    private fun fetchAndDisplayCurrentMeasurementsCollection() {
         CoroutineScope(Dispatchers.Main).launch {
             try {
-                val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
                 val students = firebaseHelper.getStudentsFromMeasurementsCollection()
 
                 students.forEach { student ->

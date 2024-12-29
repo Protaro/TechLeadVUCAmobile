@@ -26,26 +26,29 @@ class DashboardFragment : Fragment() {
     ): View {
         _binding = FragmentDashboardBinding.inflate(inflater, container, false)
         val root: View = binding.root
-        val toggleDashboard = binding.toggleDashboard
-
-        toggleDashboard.setOnCheckedChangeListener { _, checkedId ->
-            loadLayout(checkedId)
-        }
-        loadLayout(false)
         return root
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        binding.toggleDashboard.setOnCheckedChangeListener { _, checkedId ->
+            loadLayout(checkedId)
+        }
+        loadLayout(false)
+    }
+
     private fun loadLayout(checkedId: Boolean) {
+        val fragmentManager = childFragmentManager
+        val transaction = fragmentManager.beginTransaction()
+
         if (checkedId) {
-            val measurementBinding = FragmentMeasurementBinding.inflate(layoutInflater)
-            binding.toggleContainer.removeAllViews()
-            binding.toggleContainer.addView(measurementBinding.root)
+            transaction.replace(binding.toggleContainer.id, MeasurementFragment())
         }
         else {
-            val attendanceBinding = FragmentAttendanceBinding.inflate(layoutInflater)
-            binding.toggleContainer.removeAllViews()
-            binding.toggleContainer.addView(attendanceBinding.root)
+            transaction.replace(binding.toggleContainer.id, AttendanceFragment())
         }
+
+        transaction.commit()
     }
 
     override fun onDestroyView() {

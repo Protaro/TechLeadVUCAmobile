@@ -17,6 +17,8 @@ import androidx.navigation.ui.setupWithNavController
 import com.example.sharedpreferences.databinding.ActivityMainBinding
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
+
+
 class MainActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityListener {
 
     private lateinit var binding: ActivityMainBinding

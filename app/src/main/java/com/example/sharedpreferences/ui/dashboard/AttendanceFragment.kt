@@ -17,11 +17,10 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 /*
-Attendance:
-Name
-Student Number
-Timestamp
-*/
+TODO:
+Fix issue with AttendanceFragment and MeasurementFragment not
+being able to communicate with Firebase (PERMISSION_DENIED)
+ */
 
 class AttendanceFragment : Fragment() {
 

@@ -23,6 +23,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
 import com.google.firebase.auth.FirebaseAuth
 
+/*
+TODO:
+Security issue: REMEMBERED_PASSWORD
+Fix issue with AttendanceFragment and MeasurementFragment not
+being able to communicate with Firebase (PERMISSION_DENIED)
+ */
+
 class LoginActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityListener {
 
     private lateinit var connectivityReceiver: ConnectivityReceiver
@@ -33,6 +40,7 @@ class LoginActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityList
     companion object {
         private const val SHARED_PREFS = "shared_prefs"
         private const val REMEMBERED_EMAIL = "remembered_email"
+        private const val REMEMBERED_PASSWORD = "remembered_password"
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -53,6 +61,7 @@ class LoginActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityList
         val isLoggedIn = sharedPreferences.getBoolean("isLoggedIn", false)
         val logTime = sharedPreferences.getLong("logTime", 0)
         if (isLoggedIn && (logTime + 48 * 60 * 60 * 1000 > System.currentTimeMillis())) { // 48 hours time-to-live
+            auth.signInWithEmailAndPassword(REMEMBERED_EMAIL, REMEMBERED_PASSWORD)
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
             finish()
@@ -158,7 +167,9 @@ class LoginActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityList
                     val editor = sharedPreferences.edit()
                     // Save email if "Remember Me" is checked
                     if (rememberMe) {
-                        editor.putString(REMEMBERED_EMAIL, email).apply()
+                        editor.putString(REMEMBERED_EMAIL, email)
+                        editor.putString(REMEMBERED_PASSWORD, password)
+                        editor.apply()
                     } else {
                         // Clear saved email if not checked
                         editor.remove(REMEMBERED_EMAIL).apply()

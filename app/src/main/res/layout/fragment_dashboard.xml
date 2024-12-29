@@ -12,14 +12,15 @@
         android:id="@+id/toggleDashboard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
         android:text="toggleDashboard"
         android:textOff="attendance"
         android:textOn="measurement" />
 
-    <androidx.fragment.app.FragmentContainerView
+    <LinearLayout
         android:id="@+id/toggleContainer"
-        android:name="com.example.sharedpreferences.ui.dashboard.AttendanceFragment"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="530dp"
+        android:orientation="vertical"></LinearLayout>
 
 </LinearLayout>
