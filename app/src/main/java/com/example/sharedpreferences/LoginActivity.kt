@@ -25,9 +25,7 @@ import com.google.firebase.auth.FirebaseAuth
 
 /*
 TODO:
-Security issue: REMEMBERED_PASSWORD
-Fix issue with AttendanceFragment and MeasurementFragment not
-being able to communicate with Firebase (PERMISSION_DENIED)
+
  */
 
 class LoginActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityListener {

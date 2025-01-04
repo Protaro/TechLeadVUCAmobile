@@ -1,34 +1,16 @@
 {
   "project_info": {
-    "project_number": "371717662705",
-    "project_id": "techleadvucamobile-3a58f",
-    "storage_bucket": "techleadvucamobile-3a58f.firebasestorage.app"
+    "project_number": "400544716024",
+    "firebase_url": "https://techleadvuca-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "techleadvuca",
+    "storage_bucket": "techleadvuca.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:371717662705:android:47582066af572d9bbb8650",
+        "mobilesdk_app_id": "1:400544716024:android:8a4f0f249f9382aefb170d",
         "android_client_info": {
           "package_name": "com.example.sharedpreferences"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyAmUo-znm7-1TaJhy9yjdQAcnZh9AYD0ak"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:371717662705:android:cfd07d80a36aad5ebb8650",
-        "android_client_info": {
-          "package_name": "techleadvuca.web.app"
         }
       },
       "oauth_client": [],

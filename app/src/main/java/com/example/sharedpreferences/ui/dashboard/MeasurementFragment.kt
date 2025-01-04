@@ -18,8 +18,7 @@ import java.util.*
 
 /*
 TODO:
-Fix issue with AttendanceFragment and MeasurementFragment not
-being able to communicate with Firebase (PERMISSION_DENIED)
+
  */
 
 class MeasurementFragment : Fragment() {
