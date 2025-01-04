@@ -8,19 +8,142 @@
     android:padding="16dp"
     tools:context="ui.dashboard.DashboardFragment">
 
-    <ToggleButton
-        android:id="@+id/toggleDashboard"
+    <!-- Section for Input Fields -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
-        android:text="toggleDashboard"
-        android:textOff="attendance"
-        android:textOn="measurement" />
+        android:orientation="vertical">
 
-    <LinearLayout
-        android:id="@+id/toggleContainer"
+        <AutoCompleteTextView
+            android:id="@+id/idEdtName"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="50dp"
+            android:layout_marginEnd="20dp"
+            android:hint="Name"
+            android:importantForAutofill="yes"
+            android:inputType="textPersonName"
+            android:padding="10dp"
+            tools:ignore="LabelFor,SpeakableTextPresentCheck" />
+
+
+        <AutoCompleteTextView
+            android:id="@+id/idEdtStudentNumber"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="20dp"
+            android:hint="Student Number"
+            android:importantForAutofill="yes"
+            android:inputType="textPersonName"
+            android:padding="10dp"
+            tools:ignore="LabelFor,SpeakableTextPresentCheck" />
+
+    </LinearLayout>
+
+    <!-- Button to Add Rows -->
+    <CheckBox
+        android:id="@+id/checkBox"
         android:layout_width="match_parent"
-        android:layout_height="530dp"
-        android:orientation="vertical"></LinearLayout>
+        android:layout_height="wrap_content"
+        android:text="Add Measurement" />
 
+    <!-- Table for Displaying Rows -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="149dp"
+        android:orientation="vertical">
+
+        <AutoCompleteTextView
+            android:id="@+id/idEdtHeight"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="20dp"
+            android:hint="Height (in cm)"
+            android:importantForAutofill="yes"
+            android:inputType="textPersonName"
+            android:padding="10dp"
+            tools:ignore="LabelFor,SpeakableTextPresentCheck" />
+
+        <AutoCompleteTextView
+            android:id="@+id/idEdtWeight"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="20dp"
+            android:hint="Weight (in kg)"
+            android:importantForAutofill="yes"
+            android:inputType="textPersonName"
+            android:padding="10dp"
+            tools:ignore="LabelFor,SpeakableTextPresentCheck" />
+
+    </LinearLayout>
+
+    <CheckBox
+        android:id="@+id/checkBox2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Log Attendance" />
+
+    <Button
+        android:id="@+id/idBtnAddRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:backgroundTint="@color/my_primary"
+        android:padding="12dp"
+        android:text="Log Attendance"
+        android:textColor="@android:color/white" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fillViewport="true">
+
+        <TableLayout
+            android:id="@+id/idTableLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stretchColumns="*" >
+
+            <!-- Table Header Row -->
+            <TableRow
+                android:background="@color/my_primary">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Name"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:textColor="@android:color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Student Number"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:textColor="@android:color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Timestamp"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:textColor="@android:color/white" />
+            </TableRow>
+
+        </TableLayout>
+    </ScrollView>
 </LinearLayout>
