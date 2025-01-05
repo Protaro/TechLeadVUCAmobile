@@ -85,7 +85,7 @@
         android:fillViewport="true">
 
         <TableLayout
-            android:id="@+id/idTableLayout"
+            android:id="@+id/idTableLayoutAttendance"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:stretchColumns="*" >
