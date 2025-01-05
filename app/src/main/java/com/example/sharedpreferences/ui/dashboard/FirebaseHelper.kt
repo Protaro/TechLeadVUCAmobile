@@ -24,39 +24,45 @@ class FirebaseHelper {
     private val firestore = FirebaseFirestore.getInstance()
 
     suspend fun getAllValidNames(): List<String> {
-        val snapshot = firestore.collection("validStudents").get().await()
-        return snapshot.documents.mapNotNull { it.getString("Name") }
+        val snapshot = firestore.collection("Students").get().await()
+        return snapshot.documents.mapNotNull {
+            document ->
+            val lastName = document.getString("lastname") ?: ""
+            val firstName = document.getString("firstname") ?: ""
+            "$lastName, $firstName".trim()
+        }
     }
 
     suspend fun getAllValidStudentNumbers(): List<String> {
-        val snapshot = firestore.collection("validStudents").get().await()
-        return snapshot.documents.mapNotNull { it.getString("Student Number") }
+        val snapshot = firestore.collection("Students").get().await()
+        return snapshot.documents.mapNotNull { it.getString("lrn") }
     }
 
     suspend fun getStudentByName(name: String): Student? {
-        val snapshot = firestore.collection("validStudents")
-            .whereEqualTo("Name", name)
+        val snapshot = firestore.collection("Students")
+            .whereEqualTo("lastname", name.substringBefore(", ").trim()) // Filter by last name
+            .whereEqualTo("firstname", name.substringAfter(", ").trim()) // Filter by first name
             .get()
             .await()
 
         return snapshot.documents.firstOrNull()?.let {
             Student(
-                name = it.getString("Name") ?: "",
-                studentNumber = it.getString("Student Number") ?: ""
+                name = "${it.getString("lastname") ?: ""}, ${it.getString("firstname") ?: ""}".trim(),
+                studentNumber = it.getString("lrn") ?: ""
             )
         }
     }
 
     suspend fun getStudentByNumber(studentNumber: String): Student? {
-        val snapshot = firestore.collection("validStudents")
-            .whereEqualTo("Student Number", studentNumber)
+        val snapshot = firestore.collection("Students")
+            .whereEqualTo("lrn", studentNumber)
             .get()
             .await()
 
         return snapshot.documents.firstOrNull()?.let {
             Student(
-                name = it.getString("Name") ?: "",
-                studentNumber = it.getString("Student Number") ?: ""
+                name = "${it.getString("lastname") ?: ""}, ${it.getString("firstname") ?: ""}".trim(),
+                studentNumber = it.getString("lrn") ?: ""
             )
         }
     }
