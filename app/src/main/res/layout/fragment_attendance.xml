@@ -29,14 +29,14 @@
 
 
         <AutoCompleteTextView
-            android:id="@+id/idEdtStudentNumber"
+            android:id="@+id/idEdtLRN"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginStart="20dp"
             android:layout_marginTop="20dp"
             android:layout_marginEnd="20dp"
             android:layout_marginBottom="20dp"
-            android:hint="Student Number"
+            android:hint="LRN"
             android:importantForAutofill="yes"
             android:inputType="textPersonName"
             android:padding="10dp"
@@ -83,7 +83,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Student Number"
+                    android:text="LRN"
                     android:textStyle="bold"
                     android:gravity="center"
                     android:padding="8dp"

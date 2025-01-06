@@ -1,26 +1,23 @@
 package com.example.sharedpreferences.ui.dashboard
 
 import android.os.Bundle
-import android.text.InputFilter
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.ArrayAdapter
+import android.widget.TableRow
+import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.example.sharedpreferences.databinding.FragmentAttendanceBinding
 import com.example.sharedpreferences.firebase.FirebaseHelper
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.*
-
-/*
-TODO:
-Fix issue with AttendanceFragment and MeasurementFragment not
-being able to communicate with Firebase (PERMISSION_DENIED)
- */
+import java.util.Date
+import java.util.Locale
 
 class AttendanceFragment : Fragment() {
 
@@ -28,7 +25,8 @@ class AttendanceFragment : Fragment() {
     private val binding get() = _binding!!
     private val firebaseHelper = FirebaseHelper()
     private lateinit var nameAutoCompleteAdapter: ArrayAdapter<String>
-    private lateinit var studentNumberAutoCompleteAdapter: ArrayAdapter<String>
+    private lateinit var lrnAutoCompleteAdapter: ArrayAdapter<String>
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,45 +36,106 @@ class AttendanceFragment : Fragment() {
         _binding = FragmentAttendanceBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        // Restrict name input to strings
-        binding.idEdtName.filters = arrayOf(InputFilter { source, _, _, _, _, _ ->
-            if (source.matches("[a-zA-Z ]*".toRegex())) source else ""
-        })
+        val scannedData = arguments?.getString("scannedData")
+        if (!scannedData.isNullOrEmpty()) {
+            updateScannedData(scannedData)
+        }
 
-        // Restrict student number input to integers
-        binding.idEdtStudentNumber.filters = arrayOf(InputFilter { source, _, _, _, _, _ ->
-            if (source.matches("[0-9]*".toRegex())) source else ""
-        })
 
         setupAutocompleteAdapters()
         fetchAndDisplayCurrentDateCollection()
 
-        binding.idBtnAddRow.setOnClickListener {
-            val name = binding.idEdtName.text.toString().trim()
-            val studentNumber = binding.idEdtStudentNumber.text.toString().trim()
-
-            if (name.isNotEmpty() || studentNumber.isNotEmpty()) {
-                CoroutineScope(Dispatchers.Main).launch {
-                    val student = if (name.isNotEmpty()) {
-                        firebaseHelper.getStudentByName(name)
-                    } else {
-                        firebaseHelper.getStudentByNumber(studentNumber)
-                    }
-
-                    if (student != null) {
-                        addStudentToTable(student.name, student.studentNumber)
-                    } else {
-                        Toast.makeText(
-                            requireContext(),
-                            "Invalid name or student number",
-                            Toast.LENGTH_SHORT
-                        ).show()
+        binding.idEdtName.setOnItemClickListener { _, _, position, _ ->
+            val selectedName = nameAutoCompleteAdapter.getItem(position)
+            if (!selectedName.isNullOrEmpty()) {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        val student = firebaseHelper.getStudentByName(selectedName)
+                        if (student != null) {
+                            binding.idEdtLRN.setText(student.lrn) // Auto-fill LRN
+                        } else if (isAdded) {
+                            Toast.makeText(
+                                requireContext(),
+                                "No LRN found for the selected name",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        if (isAdded) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Failed to fetch LRN for the selected name",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                 }
-            } else {
+            }
+        }
+
+        binding.idEdtLRN.setOnItemClickListener { _, _, position, _ ->
+            val selectedLRN = lrnAutoCompleteAdapter.getItem(position)
+            if (!selectedLRN.isNullOrEmpty()) {
+                binding.idEdtLRN.setText(selectedLRN)
+
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        val student = firebaseHelper.getStudentByLRN(selectedLRN)
+                        if (student != null) {
+                            binding.idEdtName.setText(student.name) // Auto-fill Name
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        if (isAdded) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Failed to fetch name for the selected LRN",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
+            }
+        }
+
+        binding.idBtnAddRow.setOnClickListener {
+            val name = binding.idEdtName.text.toString().trim()
+            val lrn = binding.idEdtLRN.text.toString().trim()
+
+            if (name.isNotEmpty() || lrn.isNotEmpty()) {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        val student = if (name.isNotEmpty()) {
+                            firebaseHelper.getStudentByName(name)
+                        } else {
+                            firebaseHelper.getStudentByLRN(lrn)
+                        }
+
+                        if (student != null) {
+                            addStudentToTable(student.name, student.lrn)
+                        } else if (isAdded) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Invalid name or LRN",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        if (isAdded) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Error adding student to table",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
+            } else if (isAdded) {
                 Toast.makeText(
                     requireContext(),
-                    "Please input either a name or student number",
+                    "Please input either a name or LRN",
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -86,71 +145,138 @@ class AttendanceFragment : Fragment() {
     }
 
     private fun setupAutocompleteAdapters() {
-        // Initialize adapters
-        nameAutoCompleteAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line)
-        studentNumberAutoCompleteAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line)
+        nameAutoCompleteAdapter =
+            ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line)
+        lrnAutoCompleteAdapter =
+            ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line)
 
-        // Assign adapters to AutoCompleteTextView fields
         binding.idEdtName.setAdapter(nameAutoCompleteAdapter)
-        binding.idEdtStudentNumber.setAdapter(studentNumberAutoCompleteAdapter)
+        binding.idEdtLRN.setAdapter(lrnAutoCompleteAdapter)
 
-        // Populate adapters with Firestore data
-        CoroutineScope(Dispatchers.Main).launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val validNames = firebaseHelper.getAllValidNames()
-                val validStudentNumbers = firebaseHelper.getAllValidStudentNumbers()
+                val validLRNs = firebaseHelper.getAllValidLRNs()
                 nameAutoCompleteAdapter.addAll(validNames)
-                studentNumberAutoCompleteAdapter.addAll(validStudentNumbers)
+                lrnAutoCompleteAdapter.addAll(validLRNs)
             } catch (e: Exception) {
                 e.printStackTrace()
-                Toast.makeText(
-                    requireContext(),
-                    "Failed to fetch autocomplete suggestions",
-                    Toast.LENGTH_SHORT
-                ).show()
+                if (isAdded) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Failed to fetch autocomplete suggestions",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
     }
 
-    private fun addStudentToTable(name: String, studentNumber: String) {
+
+    fun updateScannedData(scannedData: String) {
+        if (!isAdded) return
+
+        val lrn = scannedData.trim()
+        Log.d("QRScanAtt", "Scanned Data: $scannedData")
+        if (lrn.isNotEmpty()) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    val student = firebaseHelper.getStudentByLRN(lrn)
+                    if (student != null) {
+                        addStudentToTable(student.name, lrn)
+                    } else if (isAdded) {
+                        Toast.makeText(requireContext(), "Invalid LRN scanned", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    if (isAdded) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Error processing scanned LRN",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+        } else if (isAdded) {
+            Toast.makeText(requireContext(), "Invalid QR code format", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun addStudentToTable(name: String, lrn: String) {
         val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
 
-        CoroutineScope(Dispatchers.Main).launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
-                firebaseHelper.addStudentToDateCollection(name, studentNumber, timestamp)
-                displayInTable(name, studentNumber, timestamp)
+                var finalName = name
+                var finalLrn = lrn
+
+                if (finalName.isNotEmpty() && finalLrn.isEmpty()) {
+                    val student = firebaseHelper.getStudentByName(finalName)
+                    if (student != null) {
+                        finalLrn = student.lrn
+                        binding.idEdtLRN.setText(finalLrn)
+                    }
+                }
+
+                if (finalLrn.isNotEmpty() && finalName.isEmpty()) {
+                    val student = firebaseHelper.getStudentByLRN(finalLrn)
+                    if (student != null) {
+                        finalName = student.name
+                        binding.idEdtName.setText(finalName)
+                    }
+                }
+
+                if (finalName.isNotEmpty() && finalLrn.isNotEmpty()) {
+                    firebaseHelper.addStudentToDateCollection(finalName, finalLrn, timestamp)
+                    displayInTable(finalName, finalLrn, timestamp)
+                } else if (isAdded) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Invalid input. Both name and LRN must be valid.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
-                Toast.makeText(
-                    requireContext(),
-                    "Error adding student to database",
-                    Toast.LENGTH_SHORT
-                ).show()
+                if (isAdded) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Error adding student to database",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
     }
 
     private fun fetchAndDisplayCurrentDateCollection() {
-        CoroutineScope(Dispatchers.Main).launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
                 val students = firebaseHelper.getStudentsFromDateCollection(currentDate)
 
                 students.forEach { student ->
-                    displayInTable(student.name, student.studentNumber, student.timestamp)
+                    displayInTable(student.name, student.lrn, student.timestamp)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                Toast.makeText(
-                    requireContext(),
-                    "Failed to fetch current date collection",
-                    Toast.LENGTH_SHORT
-                ).show()
+                if (isAdded) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Failed to fetch current date collection",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
     }
 
-    private fun displayInTable(name: String, studentNumber: String, timestamp: String) {
+
+    private fun displayInTable(name: String, lrn: String, timestamp: String) {
+        if (!isAdded) return
+
         val tableRow = TableRow(requireContext())
 
         val nameTextView = TextView(requireContext()).apply {
@@ -160,8 +286,8 @@ class AttendanceFragment : Fragment() {
             gravity = Gravity.CENTER
         }
 
-        val studentNumberTextView = TextView(requireContext()).apply {
-            text = studentNumber
+        val lrnTextView = TextView(requireContext()).apply {
+            text = lrn
             setPadding(10, 10, 10, 10)
             textAlignment = View.TEXT_ALIGNMENT_CENTER
             gravity = Gravity.CENTER
@@ -176,7 +302,7 @@ class AttendanceFragment : Fragment() {
 
         tableRow.apply {
             addView(nameTextView)
-            addView(studentNumberTextView)
+            addView(lrnTextView)
             addView(timestampTextView)
             gravity = Gravity.CENTER
         }
@@ -188,4 +314,13 @@ class AttendanceFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
+
+
+
+
 }
+
+
+
+
+

@@ -16,19 +16,13 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
-/*
-TODO:
-Fix issue with AttendanceFragment and MeasurementFragment not
-being able to communicate with Firebase (PERMISSION_DENIED)
- */
-
 class MeasurementFragment : Fragment() {
 
     private var _binding: FragmentMeasurementBinding? = null
     private val binding get() = _binding!!
     private val firebaseHelper = FirebaseHelper()
     private lateinit var nameAutoCompleteAdapter: ArrayAdapter<String>
-    private lateinit var studentNumberAutoCompleteAdapter: ArrayAdapter<String>
+    private lateinit var lrnAutoCompleteAdapter: ArrayAdapter<String>
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,39 +32,94 @@ class MeasurementFragment : Fragment() {
         _binding = FragmentMeasurementBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        // Restrict name input to strings
-        binding.idEdtName.filters = arrayOf(InputFilter { source, _, _, _, _, _ ->
-            if (source.matches("[a-zA-Z ]*".toRegex())) source else ""
-        })
-
-        // Restrict student number input to integers
-        binding.idEdtStudentNumber.filters = arrayOf(InputFilter { source, _, _, _, _, _ ->
-            if (source.matches("[0-9]*".toRegex())) source else ""
-        })
+//        // Restrict name input to strings
+//        binding.idEdtName.filters = arrayOf(InputFilter { source, _, _, _, _, _ ->
+//            if (source.matches("[a-zA-Z ]*".toRegex())) source else ""
+//        })
+//
+//        // Restrict lrn input to integers
+//        binding.idEdtLRN.filters = arrayOf(InputFilter { source, _, _, _, _, _ ->
+//            if (source.matches("[0-9]*".toRegex())) source else ""
+//        })
 
         setupAutocompleteAdapters()
         fetchAndDisplayCurrentMeasurementsCollection()
 
+        // Handle name selection autofill
+        binding.idEdtName.setOnItemClickListener { _, _, position, _ ->
+            val selectedName = nameAutoCompleteAdapter.getItem(position)
+            if (!selectedName.isNullOrEmpty()) {
+                // Fetch the student by name and update the LRN field
+                CoroutineScope(Dispatchers.Main).launch {
+                    try {
+                        val student = firebaseHelper.getStudentByName(selectedName)
+                        if (student != null) {
+                            binding.idEdtLRN.setText(student.lrn) // Auto-fill LRN
+                        } else {
+                            Toast.makeText(
+                                requireContext(),
+                                "No LRN found for the selected name",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to fetch LRN for the selected name",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+        }
+
+
+        // Handle LRN selection autofill
+        binding.idEdtLRN.setOnItemClickListener { _, _, position, _ ->
+            val selectedLRN = lrnAutoCompleteAdapter.getItem(position)
+            if (!selectedLRN.isNullOrEmpty()) {
+                binding.idEdtLRN.setText(selectedLRN) // Explicitly set the text
+
+                CoroutineScope(Dispatchers.Main).launch {
+                    try {
+                        val student = firebaseHelper.getStudentByLRN(selectedLRN)
+                        if (student != null) {
+                            binding.idEdtName.setText(student.name) // Auto-fill Name
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to fetch name for the selected LRN",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+        }
+
+        // Add row button logic
         binding.idBtnAddRow.setOnClickListener {
             val name = binding.idEdtName.text.toString().trim()
-            val studentNumber = binding.idEdtStudentNumber.text.toString().trim()
-            val height = binding.idEdtHeight.text.toString().trim().toFloat()
-            val weight = binding.idEdtWeight.text.toString().trim().toFloat()
+            val lrn = binding.idEdtLRN.text.toString().trim()
+            val height = binding.idEdtHeight.text.toString().trim().toFloatOrNull()
+            val weight = binding.idEdtWeight.text.toString().trim().toFloatOrNull()
 
-            if (name.isNotEmpty() || studentNumber.isNotEmpty()) {
+            if ((name.isNotEmpty() || lrn.isNotEmpty()) && height != null && weight != null) {
                 CoroutineScope(Dispatchers.Main).launch {
                     val student = if (name.isNotEmpty()) {
                         firebaseHelper.getStudentByName(name)
                     } else {
-                        firebaseHelper.getStudentByNumber(studentNumber)
+                        firebaseHelper.getStudentByLRN(lrn)
                     }
 
                     if (student != null) {
-                        addStudentToMeasurementTable(student.name, student.studentNumber, height, weight)
+                        addStudentToMeasurementTable(student.name, student.lrn, height, weight)
                     } else {
                         Toast.makeText(
                             requireContext(),
-                            "Invalid name or student number",
+                            "Invalid name or LRN",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -78,7 +127,7 @@ class MeasurementFragment : Fragment() {
             } else {
                 Toast.makeText(
                     requireContext(),
-                    "Please input either a name or student number",
+                    "Please input valid name, LRN, height, and weight",
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -88,21 +137,18 @@ class MeasurementFragment : Fragment() {
     }
 
     private fun setupAutocompleteAdapters() {
-        // Initialize adapters
         nameAutoCompleteAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line)
-        studentNumberAutoCompleteAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line)
+        lrnAutoCompleteAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line)
 
-        // Assign adapters to AutoCompleteTextView fields
         binding.idEdtName.setAdapter(nameAutoCompleteAdapter)
-        binding.idEdtStudentNumber.setAdapter(studentNumberAutoCompleteAdapter)
+        binding.idEdtLRN.setAdapter(lrnAutoCompleteAdapter)
 
-        // Populate adapters with Firestore data
         CoroutineScope(Dispatchers.Main).launch {
             try {
                 val validNames = firebaseHelper.getAllValidNames()
-                val validStudentNumbers = firebaseHelper.getAllValidStudentNumbers()
+                val validLRNs = firebaseHelper.getAllValidLRNs()
                 nameAutoCompleteAdapter.addAll(validNames)
-                studentNumberAutoCompleteAdapter.addAll(validStudentNumbers)
+                lrnAutoCompleteAdapter.addAll(validLRNs)
             } catch (e: Exception) {
                 e.printStackTrace()
                 Toast.makeText(
@@ -114,13 +160,13 @@ class MeasurementFragment : Fragment() {
         }
     }
 
-    private fun addStudentToMeasurementTable(name: String, studentNumber: String, height: Float, weight: Float) {
+    private fun addStudentToMeasurementTable(name: String, lrn: String, height: Float, weight: Float) {
         val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
 
         CoroutineScope(Dispatchers.Main).launch {
             try {
-                firebaseHelper.addStudentToMeasurementsCollection(name, studentNumber, timestamp, height, weight)
-                displayInTable(name, studentNumber, height, weight, timestamp)
+                firebaseHelper.addStudentToMeasurementsCollection(name, lrn, timestamp, height, weight)
+                displayInTable(name, lrn, height, weight, timestamp)
             } catch (e: Exception) {
                 e.printStackTrace()
                 Toast.makeText(
@@ -138,20 +184,20 @@ class MeasurementFragment : Fragment() {
                 val students = firebaseHelper.getStudentsFromMeasurementsCollection()
 
                 students.forEach { student ->
-                    displayInTable(student.name, student.studentNumber, student.height, student.weight, student.timestamp)
+                    displayInTable(student.name, student.lrn, student.height, student.weight, student.timestamp)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
                 Toast.makeText(
                     requireContext(),
-                    "Failed to fetch current date collection",
+                    "Failed to fetch current measurements",
                     Toast.LENGTH_SHORT
                 ).show()
             }
         }
     }
 
-    private fun displayInTable(name: String, studentNumber: String, height: Float?, weight: Float?, timestamp: String) {
+    private fun displayInTable(name: String, lrn: String, height: Float?, weight: Float?, timestamp: String) {
         val tableRow = TableRow(requireContext())
 
         val nameTextView = TextView(requireContext()).apply {
@@ -161,22 +207,22 @@ class MeasurementFragment : Fragment() {
             gravity = Gravity.CENTER
         }
 
-        val studentNumberTextView = TextView(requireContext()).apply {
-            text = studentNumber
+        val lrnTextView = TextView(requireContext()).apply {
+            text = lrn
             setPadding(10, 10, 10, 10)
             textAlignment = View.TEXT_ALIGNMENT_CENTER
             gravity = Gravity.CENTER
         }
 
         val heightTextView = TextView(requireContext()).apply {
-            text = height.toString()
+            text = height?.toString() ?: ""
             setPadding(10, 10, 10, 10)
             textAlignment = View.TEXT_ALIGNMENT_CENTER
             gravity = Gravity.CENTER
         }
 
         val weightTextView = TextView(requireContext()).apply {
-            text = weight.toString()
+            text = weight?.toString() ?: ""
             setPadding(10, 10, 10, 10)
             textAlignment = View.TEXT_ALIGNMENT_CENTER
             gravity = Gravity.CENTER
@@ -191,10 +237,10 @@ class MeasurementFragment : Fragment() {
 
         tableRow.apply {
             addView(nameTextView)
-            addView(studentNumberTextView)
-            addView(timestampTextView)
+            addView(lrnTextView)
             addView(heightTextView)
             addView(weightTextView)
+            addView(timestampTextView)
             gravity = Gravity.CENTER
         }
 

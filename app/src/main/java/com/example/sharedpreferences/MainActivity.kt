@@ -1,12 +1,18 @@
+@file:Suppress("DEPRECATION")
+
 package com.example.sharedpreferences
 
 import ConnectivityReceiver
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ActivityInfo
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.navigation.NavController
@@ -15,8 +21,10 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.sharedpreferences.databinding.ActivityMainBinding
+import com.example.sharedpreferences.ui.dashboard.AttendanceFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
-
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.zxing.integration.android.IntentIntegrator
 
 
 class MainActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityListener {
@@ -90,6 +98,67 @@ class MainActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityListe
         connectivityReceiver = ConnectivityReceiver(this)
         val intentFilter = IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION)
         registerReceiver(connectivityReceiver, intentFilter)
+
+        val qrScannerLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val scannedData = result.data?.getStringExtra("SCAN_RESULT")
+                    if (scannedData != null) {
+                        Log.d("QRScan", "Scanned Data: $scannedData")
+                    } else {
+                        Log.e("QRScan", "No data received from QR scanner.")
+                    }
+                    if (scannedData != null) {
+                        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_dashboard) as? NavHostFragment
+                        val currentFragment = navHostFragment?.childFragmentManager?.fragments?.firstOrNull { it is AttendanceFragment } as? AttendanceFragment
+
+                        if (currentFragment != null) {
+                            currentFragment.updateScannedData(scannedData)
+                        } else {
+                            Log.e("MainActivity", "AttendanceFragment not found or not active")
+                        }
+                        if (currentFragment != null) {
+                            Log.d("MainActivity", "Passing scanned data to AttendanceFragment: $scannedData")
+                            currentFragment.updateScannedData(scannedData)
+                        } else {
+                            Log.e("MainActivity", "AttendanceFragment not active or not found")
+                        }
+                        val bundle = Bundle().apply {
+                            putString("scannedData", scannedData)
+                        }
+                        navController.navigate(R.id.navigation_dashboard, bundle)
+
+
+                    }
+                }
+            }
+
+
+        binding.btnScanner.setOnClickListener {
+            val intentIntegrator = IntentIntegrator(this)
+            intentIntegrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
+            intentIntegrator.setPrompt("Scan a QR Code")
+            intentIntegrator.setBeepEnabled(true)
+            intentIntegrator.setBarcodeImageEnabled(true)
+            qrScannerLauncher.launch(intentIntegrator.createScanIntent())
+        }
+
+        fun uploadScannedLRNToFirebase(lrn: String) {
+            val firestore = FirebaseFirestore.getInstance()
+            val scannedData = hashMapOf(
+                "LRN" to lrn,
+                "Timestamp" to System.currentTimeMillis()
+            )
+            firestore.collection("ScannedData").add(scannedData)
+                .addOnSuccessListener {
+                    Log.d("MainActivity", "Scanned LRN uploaded: $lrn")
+                }
+                .addOnFailureListener { e ->
+                    Log.e("MainActivity", "Failed to upload scanned LRN", e)
+                }
+        }
+
+
     }
 
     override fun onDestroy() {
@@ -112,4 +181,5 @@ class MainActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityListe
             (supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_dashboard) as NavHostFragment).navController
         return navController.navigateUp() || super.onSupportNavigateUp()
     }
+
 }

@@ -30,7 +30,7 @@
 
 
         <AutoCompleteTextView
-            android:id="@+id/idEdtStudentNumber"
+            android:id="@+id/idEdtLRN"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginStart="20dp"
@@ -106,7 +106,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Student Number"
+                    android:text="LRN"
                     android:textStyle="bold"
                     android:gravity="center"
                     android:padding="8dp"
@@ -117,7 +117,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:padding="8dp"
-                    android:text="Height (cm)"
+                    android:text="Height"
                     android:textColor="@android:color/white"
                     android:textStyle="bold" />
 
@@ -126,7 +126,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:padding="8dp"
-                    android:text="Weight (kg)"
+                    android:text="Weight"
                     android:textColor="@android:color/white"
                     android:textStyle="bold" />
 

@@ -11,6 +11,7 @@ android {
     defaultConfig {
         applicationId = "com.example.sharedpreferences"
         minSdk = 24
+        //noinspection OldTargetApi
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -40,7 +41,8 @@ android {
 }
 
 dependencies {
-
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
     implementation(libs.zxing.android.embedded)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

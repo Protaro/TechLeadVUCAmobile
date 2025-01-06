@@ -1,18 +1,11 @@
 package com.example.sharedpreferences.ui.dashboard
 
 import android.os.Bundle
-import android.text.InputFilter
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
 import androidx.fragment.app.Fragment
 import com.example.sharedpreferences.databinding.FragmentDashboardBinding
-import com.example.sharedpreferences.databinding.FragmentMeasurementBinding
-import com.example.sharedpreferences.databinding.FragmentAttendanceBinding
-import com.example.sharedpreferences.firebase.FirebaseHelper
-import java.util.*
 
 class DashboardFragment : Fragment() {
 
