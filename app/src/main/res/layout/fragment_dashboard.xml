@@ -8,19 +8,254 @@
     android:padding="16dp"
     tools:context="ui.dashboard.DashboardFragment">
 
-    <ToggleButton
-        android:id="@+id/toggleDashboard"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
-        android:text="toggleDashboard"
-        android:textOff="attendance"
-        android:textOn="measurement" />
+    <!-- Section for Input Fields -->
 
     <LinearLayout
-        android:id="@+id/toggleContainer"
         android:layout_width="match_parent"
-        android:layout_height="530dp"
-        android:orientation="vertical"></LinearLayout>
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <AutoCompleteTextView
+            android:id="@+id/idEdtName"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="50dp"
+            android:layout_marginEnd="20dp"
+            android:hint="Name"
+            android:importantForAutofill="yes"
+            android:inputType="textPersonName"
+            android:padding="10dp"
+            tools:ignore="LabelFor,SpeakableTextPresentCheck" />
+
+
+        <AutoCompleteTextView
+            android:id="@+id/idEdtLRN"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="20dp"
+            android:hint="LRN"
+            android:importantForAutofill="yes"
+            android:inputType="textPersonName"
+            android:padding="10dp"
+            tools:ignore="LabelFor,SpeakableTextPresentCheck" />
+
+        <CheckBox
+            android:id="@+id/checkBoxMeasurement"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Add Measurement" />
+
+    </LinearLayout>
+
+    <!-- Button to Add Rows -->
+
+    <!-- Table for Displaying Rows -->
+
+    <LinearLayout
+        android:id="@+id/layoutMeasurement"
+        android:layout_width="match_parent"
+        android:layout_height="207dp"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <AutoCompleteTextView
+            android:id="@+id/idEdtHeight"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="20dp"
+            android:hint="Height (in cm)"
+            android:importantForAutofill="yes"
+            android:inputType="textPersonName"
+            android:padding="10dp"
+            tools:ignore="LabelFor,SpeakableTextPresentCheck" />
+
+        <AutoCompleteTextView
+            android:id="@+id/idEdtWeight"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="20dp"
+            android:hint="Weight (in kg)"
+            android:importantForAutofill="yes"
+            android:inputType="textPersonName"
+            android:padding="10dp"
+            tools:ignore="LabelFor,SpeakableTextPresentCheck" />
+
+        <CheckBox
+            android:id="@+id/checkBoxAttendance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Log Attendance" />
+
+    </LinearLayout>
+    <Button
+        android:id="@+id/idBtnClear"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/my_primary"
+        android:padding="12dp"
+        android:text="Clear"
+        android:textColor="@android:color/white" />
+    <Button
+        android:id="@+id/idBtnAddRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:backgroundTint="@color/my_primary"
+        android:padding="12dp"
+        android:text="Log Feeding Attendance"
+        android:textColor="@android:color/white" />
+
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="355dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <HorizontalScrollView
+                android:id="@+id/ScrollViewAttendance"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TableLayout
+                    android:id="@+id/idTableLayoutAttendance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:stretchColumns="*">
+
+                    <!-- Table Header Row -->
+                    <TableRow android:background="@color/my_primary">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:padding="8dp"
+                            android:text="Name"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:padding="8dp"
+                            android:text="LRN"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:padding="8dp"
+                            android:text="Timestamp"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold" />
+
+
+                    </TableRow>
+
+                </TableLayout>
+            </HorizontalScrollView>
+
+            <HorizontalScrollView
+                android:id="@+id/ScrollViewMeasurement"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone">
+
+                <TableLayout
+                    android:id="@+id/idTableLayoutMeasurement"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:stretchColumns="*">
+
+                    <TableRow
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+
+                    <TableRow
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+
+                    <TableRow
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+
+                    <TableRow
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+
+                    <TableRow
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@color/my_primary">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:padding="8dp"
+                            android:text="Name"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:padding="8dp"
+                            android:text="LRN"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:padding="8dp"
+                            android:text="Height"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold"
+                            android:visibility="visible" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:padding="8dp"
+                            android:text="Weight"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:padding="8dp"
+                            android:text="Timestamp"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold" />
+
+
+
+                    </TableRow>
+                </TableLayout>
+            </HorizontalScrollView>
+        </LinearLayout>
+    </ScrollView>
 
 </LinearLayout>

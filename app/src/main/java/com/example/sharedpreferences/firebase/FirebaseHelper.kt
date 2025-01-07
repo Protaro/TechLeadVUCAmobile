@@ -41,13 +41,11 @@ class FirebaseHelper {
         }
     }
 
-    // Get all valid LRNs
     suspend fun getAllValidLRNs(): List<String> {
         val snapshot = firestore.collection("Students").get().await()
         return snapshot.documents.mapNotNull { it.getString("lrn") }
     }
 
-    // Fetch a student by full name
     suspend fun getStudentByName(fullName: String): Student? {
         val snapshot = firestore.collection("Students").get().await()
         val matchingDocument = snapshot.documents.firstOrNull {
@@ -70,7 +68,6 @@ class FirebaseHelper {
         }
     }
 
-    // Fetch a student by LRN
     suspend fun getStudentByLRN(lrn: String): Student? {
         val snapshot = firestore.collection("Students")
             .whereEqualTo("lrn", lrn)
@@ -89,26 +86,52 @@ class FirebaseHelper {
         }
     }
 
+
     suspend fun getStudentByQR(qrCode: String): Student? {
-        return getStudentByLRN(qrCode)
+        val snapshot = firestore.collection("Scanner")
+            .whereEqualTo("LRN", qrCode)
+            .get()
+            .await()
+            getStudentByLRN(qrCode)
+
+        return snapshot.documents.firstOrNull()?.let {
+            val firstname = it.getString("firstname")
+            val middlename = it.getString("middlename")
+            val lastname = it.getString("lastname")
+            val middleInitial = formatMiddleName(middlename)
+            Student(
+                name = "$firstname $middleInitial $lastname".trim(),
+                lrn = qrCode
+            )
+        }
     }
 
 
+    suspend fun uploadScannedLRNToFirebase(lrn: String) {
+        val scannedData = hashMapOf(
+            "LRN" to lrn,
+        )
+        firestore.collection("Scanner").add(scannedData).await()
+    }
+
     suspend fun addStudentToDateCollection(name: String, lrn: String, timestamp: String) {
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-
         val newStudent = hashMapOf(
             "Name" to name,
             "LRN" to lrn,
             "Timestamp" to timestamp
         )
-
         firestore.collection(currentDate).add(newStudent).await()
     }
 
-    suspend fun addStudentToMeasurementsCollection(name: String, lrn: String, timestamp: String, height: Float, weight: Float) {
+    suspend fun addStudentToMeasurementsCollection(
+        name: String,
+        lrn: String,
+        timestamp: String,
+        height: Float,
+        weight: Float
+    ) {
         val collectionName = "Measurements"
-
         val newStudentMeasurement = hashMapOf(
             "Name" to name,
             "LRN" to lrn,
@@ -116,7 +139,6 @@ class FirebaseHelper {
             "Weight" to weight,
             "Timestamp" to timestamp
         )
-
         firestore.collection(collectionName).add(newStudentMeasurement).await()
     }
 
@@ -125,7 +147,6 @@ class FirebaseHelper {
             .orderBy("Timestamp")
             .get()
             .await()
-
         return snapshot.documents.mapNotNull {
             val name = it.getString("Name")
             val lrn = it.getString("LRN")
@@ -141,7 +162,6 @@ class FirebaseHelper {
             .orderBy("Timestamp")
             .get()
             .await()
-
         return snapshot.documents.mapNotNull {
             val name = it.getString("Name")
             val lrn = it.getString("LRN")
