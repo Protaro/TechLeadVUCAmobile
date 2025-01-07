@@ -88,22 +88,7 @@ class FirebaseHelper {
 
 
     suspend fun getStudentByQR(qrCode: String): Student? {
-        val snapshot = firestore.collection("Scanner")
-            .whereEqualTo("LRN", qrCode)
-            .get()
-            .await()
-            getStudentByLRN(qrCode)
-
-        return snapshot.documents.firstOrNull()?.let {
-            val firstname = it.getString("firstname")
-            val middlename = it.getString("middlename")
-            val lastname = it.getString("lastname")
-            val middleInitial = formatMiddleName(middlename)
-            Student(
-                name = "$firstname $middleInitial $lastname".trim(),
-                lrn = qrCode
-            )
-        }
+        return getStudentByLRN(qrCode)
     }
 
 

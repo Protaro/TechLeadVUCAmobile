@@ -130,6 +130,8 @@ class DashboardFragment : Fragment() {
                 val student = firebaseHelper.getStudentByQR(qrCode)
                 student?.let {
                     binding.idEdtName.setText(it.name)
+                    binding.idEdtLRN.setText(it.lrn)
+                    updateScannedData(qrCode)
                 } ?: showToast("Failed to fetch name for the QR scanned")
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -230,10 +232,11 @@ class DashboardFragment : Fragment() {
 
     private fun addStudentToMeasurementTable(name: String, lrn: String, height: Float, weight: Float) {
         val timestamp = getCurrentTimestamp("yyyy-MM-dd HH:mm:ss")
+        val shortTimestamp = getCurrentTimestamp("HH:mm")
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 firebaseHelper.addStudentToMeasurementsCollection(name, lrn, timestamp, height, weight)
-                displayInMeasurementTable(name, lrn, timestamp, height.toString(), weight.toString())
+                displayInMeasurementTable(name, lrn, shortTimestamp, height.toString(), weight.toString())
             } catch (e: Exception) {
                 e.printStackTrace()
                 showToast("Error adding student to measurement database")
