@@ -35,6 +35,7 @@ class MainActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityListe
     private val firebaseHelper = FirebaseHelper()
 
 
+
     companion object {
         private const val SHARED_PREFS = "shared_prefs"
     }

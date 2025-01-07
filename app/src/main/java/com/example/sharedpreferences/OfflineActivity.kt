@@ -1,24 +1,28 @@
+@file:Suppress("DEPRECATION")
+
 package com.example.sharedpreferences
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.navigation.NavController
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.setupActionBarWithNavController
-import androidx.navigation.ui.setupWithNavController
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import androidx.lifecycle.lifecycleScope
 import com.example.sharedpreferences.databinding.ActivityOfflineBinding
-import android.content.Context
+import com.example.sharedpreferences.firebase.FirebaseHelper
+import com.google.zxing.integration.android.IntentIntegrator
+import kotlinx.coroutines.launch
 
+@Suppress("DEPRECATION")
 class OfflineActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityOfflineBinding
-    private lateinit var sharedPreferences: android.content.SharedPreferences // SharedPreferences instance
+    private lateinit var sharedPreferences: android.content.SharedPreferences
+    private val firebaseHelper = FirebaseHelper()
+
     companion object {
         private const val SHARED_PREFS = "shared_prefs"
     }
@@ -31,94 +35,77 @@ class OfflineActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         sharedPreferences = getSharedPreferences(SHARED_PREFS, Context.MODE_PRIVATE)
+
         // Setup Toolbar
         val toolbar: Toolbar = binding.toolbar
         setSupportActionBar(toolbar)
 
-        // Setup BottomNavigationView
-        val bottomNavigationView: BottomNavigationView = binding.navView
+        setupQRScanner()
+        setupLoginButton()
+    }
 
-        // Get NavController from NavHostFragment
-        val navHostFragment =
-            supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_dashboard) as NavHostFragment
-        val navController: NavController = navHostFragment.navController
-
-        // Define top-level destinations
-        val appBarConfiguration = AppBarConfiguration(
-            setOf(
-                R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications
-            )
-        )
-
-        val loginBtn = findViewById<Button>(R.id.btnLogin)
-
-        /*val db = Room.databaseBuilder(this, AppDatabase::class.java, "dashboard_db").build()*/
-
-
-        // Link NavController with ActionBar and BottomNavigationView
-        setupActionBarWithNavController(navController, appBarConfiguration)
-        bottomNavigationView.setupWithNavController(navController)
-
-        // Update Toolbar title manually
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            when (destination.id) {
-                R.id.navigation_home -> toolbar.title = "Home"
-                R.id.navigation_dashboard -> toolbar.title = "Dashboard"
-                R.id.navigation_notifications -> toolbar.title = "Notifications"
-                else -> toolbar.title = "App"
+    private fun setupQRScanner() {
+        val qrScannerLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == RESULT_OK) {
+                    val scannedData = result.data?.getStringExtra("SCAN_RESULT")
+                    if (scannedData != null) {
+                        handleScannedDataOffline(scannedData)
+                    } else {
+                        Toast.makeText(this, "No data received from QR scanner.", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
-        }
-        // Edited by Ash
-        loginBtn.setOnClickListener {
-            Toast.makeText(this, "Login test", Toast.LENGTH_SHORT).show()
-            val editor = sharedPreferences.edit()
-            // Navigate to LoginActivity
-            editor.putBoolean("isLoggedIn", false)
-            editor.putLong("logTime", 0)
-            editor.apply()
 
-            // Navigate to MainActivity
-            val intent = Intent(this, LoginActivity::class.java)
-            startActivity(intent)
+        binding.btnScanner.setOnClickListener {
+            val intentIntegrator = IntentIntegrator(this).apply {
+                setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
+                setPrompt("Scan a QR Code")
+                setBeepEnabled(true)
+                setBarcodeImageEnabled(true)
+            }
+            qrScannerLauncher.launch(intentIntegrator.createScanIntent())
+        }
+    }
+
+    private fun handleScannedDataOffline(scannedData: String) {
+        // Save data locally
+        val dataKey = "scanned_data_${System.currentTimeMillis()}"
+        val editor = sharedPreferences.edit()
+        editor.putString(dataKey, scannedData)
+        editor.apply()
+
+        Toast.makeText(this, "Data saved locally: $scannedData", Toast.LENGTH_SHORT).show()
+        syncScannedData()
+    }
+
+    private fun setupLoginButton() {
+        val loginBtn: Button = binding.btnLogin
+        loginBtn.setOnClickListener {
+            sharedPreferences.edit().apply {
+                putBoolean("isLoggedIn", false)
+                apply()
+            }
+            startActivity(Intent(this, LoginActivity::class.java))
             finish()
         }
-
-        // End of edit
     }
 
-    // Handle Up button in the ActionBar
-    override fun onSupportNavigateUp(): Boolean {
-        val navController = (supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_dashboard) as NavHostFragment).navController
-        return navController.navigateUp() || super.onSupportNavigateUp()
-    }
-
-    /*fun addDataOffline(name: String, studentNumber: String, timestamp: Long, context: Context) {
-        val db = Room.databaseBuilder(context, AppDatabase::class.java, "dashboard_db").build()
-        Thread {
-            db.dashboardDataDao().insertData(DashboardData(name = name, studentNumber = studentNumber, timestamp = timestamp))
-        }.start()
-    }*/
-
-    /*fun fetchOfflineData(context: Context): List<DashboardData> {
-        val db = Room.databaseBuilder(context, AppDatabase::class.java, "dashboard_db").build()
-        return db.dashboardDataDao().getAllData()
-    }*/
-
-    /*fun syncData(context: Context) {
-        val db = Room.databaseBuilder(context, AppDatabase::class.java, "dashboard_db").build()
-        val localData = db.dashboardDataDao().getAllData()
-        val firestore = FirebaseFirestore.getInstance()
-
-        for (data in localData) {
-            firestore.collection("validStudents")
-                .add(data)
-                .addOnSuccessListener {
-                    Thread { db.dashboardDataDao().clearAllData() }.start() // Clear local data
+    private fun syncScannedData() {
+        val allEntries = sharedPreferences.all
+        lifecycleScope.launch {
+            for ((key, value) in allEntries) {
+                if (key.startsWith("scanned_data_") && value is String) {
+                    try {
+                        // Simulate upload to Firebase
+                        firebaseHelper.uploadScannedLRNToFirebase(value)
+                        sharedPreferences.edit().remove(key).apply() // Remove after syncing
+                    } catch (e: Exception) {
+                        Toast.makeText(this@OfflineActivity, "Failed to sync: $value", Toast.LENGTH_SHORT).show()
+                    }
                 }
-                .addOnFailureListener {
-                    firestore.collection("invalidCollection").add(data)
-                }
+            }
+            Toast.makeText(this@OfflineActivity, "Data sync complete.", Toast.LENGTH_SHORT).show()
         }
-    }*/
-
+    }
 }
