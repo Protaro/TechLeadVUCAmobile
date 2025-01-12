@@ -30,7 +30,7 @@
 
 
         <AutoCompleteTextView
-            android:id="@+id/idEdtStudentNumber"
+            android:id="@+id/idEdtLRN"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginStart="20dp"
@@ -96,7 +96,14 @@
             android:text="Log Attendance" />
 
     </LinearLayout>
-
+    <Button
+        android:id="@+id/idBtnClear"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/my_primary"
+        android:padding="12dp"
+        android:text="Clear"
+        android:textColor="@android:color/white" />
     <Button
         android:id="@+id/idBtnAddRow"
         android:layout_width="match_parent"
@@ -104,12 +111,13 @@
         android:layout_marginBottom="16dp"
         android:backgroundTint="@color/my_primary"
         android:padding="12dp"
-        android:text="Log Feeding Program Attendance"
+        android:text="Log Feeding Attendance"
         android:textColor="@android:color/white" />
+
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="296dp">
+        android:layout_height="355dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -119,8 +127,7 @@
             <HorizontalScrollView
                 android:id="@+id/ScrollViewAttendance"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:visibility="gone">
+                android:layout_height="match_parent">
 
                 <TableLayout
                     android:id="@+id/idTableLayoutAttendance"
@@ -154,9 +161,11 @@
                             android:layout_height="wrap_content"
                             android:gravity="center"
                             android:padding="8dp"
-                            android:text="FP Attendance Timestamp"
+                            android:text="Timestamp"
                             android:textColor="@android:color/white"
                             android:textStyle="bold" />
+
+
                     </TableRow>
 
                 </TableLayout>
@@ -166,12 +175,13 @@
                 android:id="@+id/ScrollViewMeasurement"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:visibility="visible">
+                android:visibility="gone">
 
                 <TableLayout
                     android:id="@+id/idTableLayoutMeasurement"
                     android:layout_width="wrap_content"
-                    android:layout_height="match_parent">
+                    android:layout_height="match_parent"
+                    android:stretchColumns="*">
 
                     <TableRow
                         android:layout_width="match_parent"
@@ -236,9 +246,12 @@
                             android:layout_height="wrap_content"
                             android:gravity="center"
                             android:padding="8dp"
-                            android:text="Measurement Timestamp"
+                            android:text="Timestamp"
                             android:textColor="@android:color/white"
                             android:textStyle="bold" />
+
+
+
                     </TableRow>
                 </TableLayout>
             </HorizontalScrollView>

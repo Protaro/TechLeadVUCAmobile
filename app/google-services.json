@@ -8,6 +8,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:400544716024:android:8ec5e7974302b467fb170d",
+        "android_client_info": {
+          "package_name": "TechLeadVUCA.com"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmUo-znm7-1TaJhy9yjdQAcnZh9AYD0ak"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:400544716024:android:8a4f0f249f9382aefb170d",
         "android_client_info": {
           "package_name": "com.example.sharedpreferences"
