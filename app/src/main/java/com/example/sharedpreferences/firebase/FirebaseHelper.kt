@@ -1,5 +1,8 @@
 package com.example.sharedpreferences.firebase
 
+import android.widget.Toast
+import androidx.fragment.app.Fragment
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
@@ -107,6 +110,18 @@ class FirebaseHelper {
             "Timestamp" to timestamp
         )
         firestore.collection(currentDate).add(newStudent).await()
+
+        //Increment feedingattendance field of a student
+        val studentRef = firestore.collection("Students").whereEqualTo("lrn", lrn).get().await()
+        studentRef.documents.firstOrNull()?.reference?.update(
+            "feedingattendance",
+            FieldValue.increment(1)
+        )?.await()
+    }
+
+    suspend fun checkStudentInCurrentDateCollection(lrn: String): Boolean {
+        val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        return firestore.collection(currentDate).whereEqualTo("LRN", lrn).get().await().isEmpty
     }
 
     suspend fun addStudentToMeasurementsCollection(

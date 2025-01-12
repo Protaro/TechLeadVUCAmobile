@@ -23,11 +23,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
 import com.google.firebase.auth.FirebaseAuth
 
-/*
-TODO:
-
- */
-
 class LoginActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityListener {
 
     private lateinit var connectivityReceiver: ConnectivityReceiver
