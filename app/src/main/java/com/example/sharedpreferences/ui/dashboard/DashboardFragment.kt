@@ -239,11 +239,10 @@ class DashboardFragment : Fragment() {
 
     private fun addStudentToMeasurementTable(name: String, lrn: String, height: Float, weight: Float) {
         val timestamp = getCurrentTimestamp("yyyy-MM-dd HH:mm:ss")
-        val shortTimestamp = getCurrentTimestamp("HH:mm")
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 firebaseHelper.addStudentToMeasurementsCollection(name, lrn, timestamp, height, weight)
-                displayInMeasurementTable(name, lrn, shortTimestamp, height.toString(), weight.toString())
+                displayInMeasurementTable(name, lrn, height.toString(), weight.toString())
             } catch (e: Exception) {
                 e.printStackTrace()
                 showToast("Error adding student to measurement database")
@@ -256,8 +255,8 @@ class DashboardFragment : Fragment() {
         binding.idTableLayoutAttendance.addView(tableRow)
     }
 
-    private fun displayInMeasurementTable(name: String, lrn: String, timestamp: String, height: String, weight: String) {
-        val tableRow = createTableRow(name, lrn, height, weight, timestamp)
+    private fun displayInMeasurementTable(name: String, lrn: String, height: String, weight: String) {
+        val tableRow = createTableRow(name, lrn, height, weight)
         binding.idTableLayoutMeasurement.addView(tableRow)
     }
 
@@ -292,14 +291,15 @@ class DashboardFragment : Fragment() {
     }
 
     private fun fetchAndDisplayMeasurementCollection() {
+        val currentDate = getCurrentTimestamp("yyyy-MM-dd")
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val students = firebaseHelper.getStudentsFromMeasurementsCollection()
+                    .filter { it.timestamp.startsWith(currentDate) } // Filter for current day
                 students.forEach { student ->
                     displayInMeasurementTable(
                         student.name,
                         student.lrn,
-                        student.timestamp,
                         student.height.toString(),
                         student.weight.toString()
                     )
@@ -310,6 +310,7 @@ class DashboardFragment : Fragment() {
             }
         }
     }
+
 
     fun updateScannedData(scannedData: String) {
         val qrCodeData = scannedData.trim()
