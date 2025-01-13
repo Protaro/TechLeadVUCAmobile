@@ -15,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.sharedpreferences.databinding.FragmentDashboardBinding
 import com.example.sharedpreferences.firebase.FirebaseHelper
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -221,8 +222,14 @@ class DashboardFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 Log.d("Attendance", "Adding student: Name=$name, LRN=$lrn, Timestamp=$timestamp")
-                firebaseHelper.addStudentToDateCollection(name, lrn, timestamp)
-                displayInTableAttendance(name, lrn, timestamp)
+                // Add to attendance database if it is not yet in the current date collection
+                if (firebaseHelper.checkStudentInCurrentDateCollection(lrn)) {
+                    firebaseHelper.addStudentToDateCollection(name, lrn, timestamp)
+                    displayInTableAttendance(name, lrn, timestamp)
+                }
+                else {
+                    showToast("Student already in attendance database")
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
                 showToast("Error adding student to attendance database")
