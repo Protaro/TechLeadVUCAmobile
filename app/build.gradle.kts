@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.sharedpreferences"
+    namespace = "com.example.TLV"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.sharedpreferences"
+        applicationId = "com.example.TLV"
         minSdk = 24
         //noinspection OldTargetApi
         targetSdk = 34

@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "sharedPreferences"
+rootProject.name = "TLV"
 include(":app")
  

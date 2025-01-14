@@ -8,9 +8,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:400544716024:android:8ec5e7974302b467fb170d",
+        "mobilesdk_app_id": "1:400544716024:android:f41a44f17381e06dfb170d",
         "android_client_info": {
-          "package_name": "TechLeadVUCA.com"
+          "package_name": "com.example.TLV"
         }
       },
       "oauth_client": [],
