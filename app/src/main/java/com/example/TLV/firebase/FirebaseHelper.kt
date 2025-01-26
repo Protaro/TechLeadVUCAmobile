@@ -2,6 +2,7 @@ package com.example.TLV.firebase
 
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -104,7 +105,7 @@ class FirebaseHelper {
     suspend fun addStudentToDateCollection(name: String, lrn: String, timestamp: String) {
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val attendanceData = mapOf(lrn to timestamp)
-        firestore.collection("Feeding").document(currentDate).update(attendanceData).await()
+        firestore.collection("Feeding").document(currentDate).set(attendanceData, SetOptions.merge()).await()
 
         //Increment feedingattendance field of a student
         val studentRef = firestore.collection("Students").whereEqualTo("lrn", lrn).get().await()
