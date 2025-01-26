@@ -103,12 +103,8 @@ class FirebaseHelper {
 
     suspend fun addStudentToDateCollection(name: String, lrn: String, timestamp: String) {
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        val newStudent = hashMapOf(
-            "Name" to name,
-            "LRN" to lrn,
-            "Timestamp" to timestamp
-        )
-        firestore.collection(currentDate).add(newStudent).await()
+        val attendanceData = mapOf(lrn to timestamp)
+        firestore.collection("Attendance").document(currentDate).update(attendanceData).await()
 
         //Increment feedingattendance field of a student
         val studentRef = firestore.collection("Students").whereEqualTo("lrn", lrn).get().await()
@@ -120,7 +116,9 @@ class FirebaseHelper {
 
     suspend fun checkStudentInCurrentDateCollection(lrn: String): Boolean {
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        return firestore.collection(currentDate).whereEqualTo("LRN", lrn).get().await().isEmpty
+        val snapshot = firestore.collection("Attendance").document(currentDate)
+
+        return !snapshot.get().await().contains(lrn)
     }
 
     suspend fun addStudentToMeasurementsCollection(
@@ -168,18 +166,36 @@ class FirebaseHelper {
 
 
     suspend fun getStudentsFromDateCollection(date: String): List<Student> {
-        val snapshot = firestore.collection(date)
-            .orderBy("Timestamp")
-            .get()
-            .await()
-        return snapshot.documents.mapNotNull {
-            val name = it.getString("Name")
-            val lrn = it.getString("LRN")
-            val timestamp = it.getString("Timestamp")
-            if (name != null && lrn != null && timestamp != null) {
-                Student(name, lrn, timestamp)
-            } else null
+
+        val dateDocument = firestore.collection("Attendance").document(date).get().await()
+        val students = mutableListOf<Student>()
+        if (dateDocument.exists()) {
+            // Iterate over all fields in the date document
+            for ((lrn, timestamp) in dateDocument.data ?: emptyMap<String, Any>()) {
+                if (timestamp is String) {
+                    // Fetch student information from the Students collection using the LRN
+                    val studentSnapshot = firestore.collection("Students")
+                        .whereEqualTo("lrn", lrn)
+                        .get()
+                        .await()
+
+                    val studentDocument = studentSnapshot.documents.firstOrNull()
+                    if (studentDocument != null) {
+                        val firstname = studentDocument.getString("firstname")
+                        val middlename = studentDocument.getString("middlename")
+                        val lastname = studentDocument.getString("lastname")
+
+                        if (firstname != null && middlename != null && lastname != null) {
+                            // Format the name as "firstname middlename. lastname"
+                            val name =
+                                "$firstname ${middlename.firstOrNull() ?: ""}. $lastname".trim()
+                            students.add(Student(name, lrn, timestamp))
+                        }
+                    }
+                }
+            }
         }
+        return students
     }
 
     suspend fun getStudentsFromMeasurementsCollection(): List<StudentMeasurement> {
