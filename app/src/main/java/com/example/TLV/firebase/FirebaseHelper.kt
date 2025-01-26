@@ -104,7 +104,7 @@ class FirebaseHelper {
     suspend fun addStudentToDateCollection(name: String, lrn: String, timestamp: String) {
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val attendanceData = mapOf(lrn to timestamp)
-        firestore.collection("Attendance").document(currentDate).update(attendanceData).await()
+        firestore.collection("Feeding").document(currentDate).update(attendanceData).await()
 
         //Increment feedingattendance field of a student
         val studentRef = firestore.collection("Students").whereEqualTo("lrn", lrn).get().await()
@@ -116,7 +116,7 @@ class FirebaseHelper {
 
     suspend fun checkStudentInCurrentDateCollection(lrn: String): Boolean {
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        val snapshot = firestore.collection("Attendance").document(currentDate)
+        val snapshot = firestore.collection("Feeding").document(currentDate)
 
         return !snapshot.get().await().contains(lrn)
     }
@@ -167,7 +167,7 @@ class FirebaseHelper {
 
     suspend fun getStudentsFromDateCollection(date: String): List<Student> {
 
-        val dateDocument = firestore.collection("Attendance").document(date).get().await()
+        val dateDocument = firestore.collection("Feeding").document(date).get().await()
         val students = mutableListOf<Student>()
         if (dateDocument.exists()) {
             // Iterate over all fields in the date document
