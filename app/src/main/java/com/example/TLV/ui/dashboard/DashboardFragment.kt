@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.SeekBar
 import android.widget.TableRow
 import android.widget.TextView
 import android.widget.Toast
@@ -35,36 +36,29 @@ class DashboardFragment : Fragment() {
         _binding = FragmentDashboardBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        val scannedData = arguments?.getString("scannedData")
-        scannedData?.let {
-            fetchStudentDetailsByQR(it)
-        }
+        arguments?.getString("scannedData")?.let { fetchStudentDetailsByQR(it) }
 
         setupAutocompleteAdapters()
-        fetchAndDisplayCurrentDateCollection()
-        fetchAndDisplayMeasurementCollection()
-
-
+        fetchAndDisplayCollections()
         setupEventListeners()
+
+        // Set default visibility for tables
+        showDefaultTable()
 
         return root
     }
 
     private fun setupAutocompleteAdapters() {
-        nameAutoCompleteAdapter =
-            ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line)
-        lrnAutoCompleteAdapter =
-            ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line)
+        nameAutoCompleteAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line)
+        lrnAutoCompleteAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line)
 
         binding.idEdtName.setAdapter(nameAutoCompleteAdapter)
         binding.idEdtLRN.setAdapter(lrnAutoCompleteAdapter)
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val validNames = firebaseHelper.getAllValidNames()
-                val validLRNs = firebaseHelper.getAllValidLRNs()
-                nameAutoCompleteAdapter.addAll(validNames)
-                lrnAutoCompleteAdapter.addAll(validLRNs)
+                nameAutoCompleteAdapter.addAll(firebaseHelper.getAllValidNames())
+                lrnAutoCompleteAdapter.addAll(firebaseHelper.getAllValidLRNs())
             } catch (e: Exception) {
                 e.printStackTrace()
                 showToast("Failed to fetch autocomplete suggestions")
@@ -74,33 +68,46 @@ class DashboardFragment : Fragment() {
 
     private fun setupEventListeners() {
         binding.idEdtName.setOnItemClickListener { _, _, position, _ ->
-            val selectedName = nameAutoCompleteAdapter.getItem(position)
-            selectedName?.let { fetchStudentDetailsByName(it) }
+            nameAutoCompleteAdapter.getItem(position)?.let { fetchStudentDetailsByName(it) }
         }
 
         binding.idEdtLRN.setOnItemClickListener { _, _, position, _ ->
-            val selectedLRN = lrnAutoCompleteAdapter.getItem(position)
-            selectedLRN?.let { fetchStudentDetailsByLRN(it) }
+            lrnAutoCompleteAdapter.getItem(position)?.let { fetchStudentDetailsByLRN(it) }
         }
 
         binding.idBtnAddRow.setOnClickListener { handleAddRowClick() }
-
         binding.idBtnClear.setOnClickListener { handleClearClick() }
 
-        binding.checkBoxMeasurement.setOnCheckedChangeListener { _, isChecked ->
-            handleMeasurementCheckboxChange(isChecked)
+        binding.checkBoxMeasurement.setOnCheckedChangeListener { _, isChecked -> handleMeasurementCheckboxChange(isChecked) }
+        binding.checkBoxAttendance.setOnCheckedChangeListener { _, isChecked -> handleAttendanceCheckboxChange(isChecked) }
+        binding.checkBoxRating.setOnCheckedChangeListener { _, isChecked -> handleRatingCheckboxChange(isChecked) }
+
+        setupSliderListeners()
+    }
+
+    private fun setupSliderListeners() {
+        binding.sliderLiteracy.setOnSeekBarChangeListener(createSliderChangeListener { progress ->
+            binding.literacyValue.text = "Value: $progress"
+        })
+
+        binding.sliderNumeracy.setOnSeekBarChangeListener(createSliderChangeListener { progress ->
+            binding.numeracyValue.text = "Value: $progress"
+        })
+    }
+
+    private fun createSliderChangeListener(onProgressChanged: (Int) -> Unit) = object : SeekBar.OnSeekBarChangeListener {
+        override fun onProgressChanged(seekBar: SeekBar?, progress: Int, p2: Boolean) {
+            onProgressChanged(progress)
         }
 
-        binding.checkBoxAttendance.setOnCheckedChangeListener { _, isChecked ->
-            handleAttendanceCheckboxChange(isChecked)
-        }
+        override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+        override fun onStopTrackingTouch(seekBar: SeekBar?) {}
     }
 
     private fun fetchStudentDetailsByName(name: String) {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val student = firebaseHelper.getStudentByName(name)
-                student?.let {
+                firebaseHelper.getStudentByName(name)?.let {
                     binding.idEdtLRN.setText(it.lrn)
                 } ?: showToast("No LRN found for the selected name")
             } catch (e: Exception) {
@@ -113,8 +120,7 @@ class DashboardFragment : Fragment() {
     private fun fetchStudentDetailsByLRN(lrn: String) {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val student = firebaseHelper.getStudentByLRN(lrn)
-                student?.let {
+                firebaseHelper.getStudentByLRN(lrn)?.let {
                     binding.idEdtName.setText(it.name)
                 } ?: showToast("Failed to fetch name for the selected LRN")
             } catch (e: Exception) {
@@ -127,8 +133,7 @@ class DashboardFragment : Fragment() {
     private fun fetchStudentDetailsByQR(qrCode: String) {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val student = firebaseHelper.getStudentByQR(qrCode)
-                student?.let {
+                firebaseHelper.getStudentByQR(qrCode)?.let {
                     binding.idEdtName.setText(it.name)
                     binding.idEdtLRN.setText(it.lrn)
                     updateScannedData(qrCode)
@@ -140,12 +145,67 @@ class DashboardFragment : Fragment() {
         }
     }
 
+    private fun fetchAndDisplayCollections() {
+        fetchAndDisplayAttendanceCollection()
+        fetchAndDisplayMeasurementCollection()
+        fetchAndDisplayRatingsCollection()
+    }
+
+    private fun fetchAndDisplayAttendanceCollection() {
+        val currentDate = getCurrentTimestamp("yyyy-MM-dd")
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                firebaseHelper.getStudentsFromAttendanceCollection(currentDate).forEach { student ->
+                    displayInAttendanceTable(student.name, student.lrn, student.timestamp)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                showToast("Failed to fetch attendance collection")
+            }
+        }
+    }
+
+    private fun fetchAndDisplayMeasurementCollection() {
+        val currentDate = getCurrentTimestamp("yyyy-MM-dd")
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                firebaseHelper.getStudentsFromMeasurementsCollection()
+                    .filter { it.timestamp.startsWith(currentDate) }
+                    .forEach { student ->
+                        displayInMeasurementTable(student.name, student.lrn, student.height.toString(), student.weight.toString())
+                    }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                showToast("Failed to fetch measurement collection")
+            }
+        }
+    }
+
+    private fun fetchAndDisplayRatingsCollection() {
+        val currentDate = getCurrentTimestamp("yyyy-MM-dd")
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                firebaseHelper.getStudentsFromRatingsCollection()
+                    .filter { it.timestamp?.startsWith(currentDate) == true }
+                    .forEach { rating ->
+                        firebaseHelper.getStudentByLRN(rating.lrn)?.let { studentDetails ->
+                            displayInRatingsTable(studentDetails.name, rating.lrn, rating.numeracy.toString(), rating.literacy.toString())
+                        }
+                    }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                showToast("Failed to fetch ratings collection")
+            }
+        }
+    }
 
     private fun handleAddRowClick() {
         val name = binding.idEdtName.text.toString().trim()
         val lrn = binding.idEdtLRN.text.toString().trim()
         val height = binding.idEdtHeight.text.toString().trim()
         val weight = binding.idEdtWeight.text.toString().trim()
+        val literacy = binding.sliderLiteracy.progress.toString()
+        val numeracy = binding.sliderNumeracy.progress.toString()
 
         if (name.isEmpty() && lrn.isEmpty()) {
             showToast("Please input either a name or student number")
@@ -154,11 +214,9 @@ class DashboardFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val student = firebaseHelper.getStudentByName(name)
-                    ?: firebaseHelper.getStudentByLRN(lrn)
-
+                val student = firebaseHelper.getStudentByName(name) ?: firebaseHelper.getStudentByLRN(lrn)
                 student?.let {
-                    processStudentData(it.name, it.lrn, height, weight)
+                    processStudentData(it.name, it.lrn, height, weight, literacy, numeracy)
                 } ?: showToast("Invalid name or student number")
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -167,58 +225,31 @@ class DashboardFragment : Fragment() {
         }
     }
 
-
     private fun handleClearClick() {
-        // Clear the text of the input fields
         binding.idEdtName.text.clear()
         binding.idEdtLRN.text.clear()
         binding.idEdtHeight.text.clear()
         binding.idEdtWeight.text.clear()
     }
 
-    private fun processStudentData(name: String, lrn: String, height: String, weight: String) {
-        if (binding.checkBoxMeasurement.isChecked && height.isNotEmpty() && weight.isNotEmpty()) {
-            val heightValue = height.toFloatOrNull()
-            val weightValue = weight.toFloatOrNull()
+    private fun processStudentData(name: String, lrn: String, height: String, weight: String, literacy: String?, numeracy: String?) {
+        val heightValue = height.toFloatOrNull()
+        val weightValue = weight.toFloatOrNull()
 
-            if (heightValue != null && weightValue != null) {
-                if (binding.checkBoxAttendance.isChecked) {
-                    addStudentToMeasurementTable(name, lrn, heightValue, weightValue)
-                    addStudentToAttendanceTable(name, lrn)
-                } else {
-                    addStudentToMeasurementTable(name, lrn, heightValue, weightValue)
-                }
-            } else {
-                showToast("Please input valid height and weight")
-            }
-        } else {
-            if (binding.checkBoxMeasurement.isChecked) {
-                showToast("Please input valid height and weight")
-            }
-            else {
-                addStudentToAttendanceTable(name, lrn)
-            }
+        // Check if height and weight are valid
+        if (binding.checkBoxMeasurement.isChecked && heightValue != null && weightValue != null) {
+            // Add measurement data
+            addStudentToMeasurementTable(name, lrn, heightValue, weightValue)
         }
-    }
 
-    private fun handleMeasurementCheckboxChange(isChecked: Boolean) {
-        binding.layoutMeasurement.visibility = if (isChecked) View.VISIBLE else View.GONE
-        binding.ScrollViewMeasurement.visibility = if (isChecked) View.VISIBLE else View.GONE
-        binding.ScrollViewAttendance.visibility = if (isChecked) View.GONE else View.VISIBLE
-        binding.checkBoxAttendance.isChecked = false
-
-        binding.idBtnAddRow.text = if (isChecked) {
-            "Log Measurement"
-        } else {
-            "Log Feeding Program Attendance"
+        // Check if attendance should be logged
+        if (binding.checkBoxAttendance.isChecked) {
+            addStudentToAttendanceTable(name, lrn)
         }
-    }
 
-    private fun handleAttendanceCheckboxChange(isChecked: Boolean) {
-        binding.idBtnAddRow.text = if (isChecked) {
-            "Log Feeding Program Attendance & Measurement"
-        } else {
-            "Log Measurement"
+        // Check if ratings should be logged
+        if (binding.checkBoxRating.isChecked) {
+            addStudentToRatingTable(name, lrn, literacy, numeracy)
         }
     }
 
@@ -227,10 +258,9 @@ class DashboardFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 Log.d("Attendance", "Adding student: Name=$name, LRN=$lrn, Timestamp=$timestamp")
-                // Add to attendance database if it is not yet in the current date collection
-                if (firebaseHelper.checkStudentInCurrentDateCollection(lrn)) {
-                    firebaseHelper.addStudentToDateCollection(name, lrn, timestamp)
-                    displayInTableAttendance(name, lrn, timestamp)
+                if (firebaseHelper.checkStudentInAttendanceCollection(lrn)) {
+                    firebaseHelper.addStudentToAttendanceCollection(name, lrn, timestamp)
+                    displayInAttendanceTable(name, lrn, timestamp)
                 } else {
                     showToast("Student already in attendance database")
                 }
@@ -241,25 +271,11 @@ class DashboardFragment : Fragment() {
         }
     }
 
-    private fun addStudentToMeasurementTable(
-        name: String,
-        lrn: String,
-        height: Float,
-        weight: Float
-    ) {
+    private fun addStudentToMeasurementTable(name: String, lrn: String, height: Float, weight: Float) {
         val timestamp = getCurrentTimestamp("yyyy-MM-dd HH:mm:ss")
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                // Add student to Firestore
-                firebaseHelper.addStudentToMeasurementsCollection(
-                    name,
-                    lrn,
-                    timestamp,
-                    height,
-                    weight
-                )
-
-                // Update the UI table after saving
+                firebaseHelper.addStudentToMeasurementsCollection(name, lrn, timestamp, height, weight)
                 displayInMeasurementTable(name, lrn, height.toString(), weight.toString())
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -269,95 +285,159 @@ class DashboardFragment : Fragment() {
     }
 
 
-
-
-    private fun displayInTableAttendance(name: String, lrn: String, timestamp: String) {
-        val tableRow = createTableRow(name, lrn, timestamp)
-        binding.idTableLayoutAttendance.addView(tableRow)
+    private fun addStudentToRatingTable(name: String, lrn: String, numeracy: String?, literacy: String?) {
+        val timestamp = getCurrentTimestamp("yyyy-MM-dd HH:mm:ss")
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                // Add to Literacy Scores
+                firebaseHelper.addStudentToLiteracyCollection(lrn, literacy, timestamp)
+                // Add to Numeracy Scores
+                firebaseHelper.addStudentToNumeracyCollection(lrn, numeracy, timestamp)
+                displayInRatingsTable(name, lrn, numeracy, literacy)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                showToast("Error adding student to ratings database: ${e.message}")
+            }
+        }
     }
 
-    private fun displayInMeasurementTable(
-        name: String,
-        lrn: String,
-        height: String,
-        weight: String
-    ) {
-        // Check if a row with the same LRN already exists
+    private fun createTableRow(vararg cellTexts: String): TableRow {
+        return TableRow(requireContext()).apply {
+            cellTexts.forEach { text ->
+                addView(TextView(requireContext()).apply {
+                    this.text = text
+                    setPadding(10, 10, 10, 10)
+                    textAlignment = View.TEXT_ALIGNMENT_CENTER
+                    gravity = Gravity.CENTER
+                })
+            }
+            gravity = Gravity.CENTER
+        }
+    }
+
+    private fun handleAttendanceCheckboxChange(isChecked: Boolean) {
+        binding.ScrollViewAttendance.visibility = if (isChecked) View.VISIBLE else View.GONE
+        updateButtonText()
+        showRelevantTables() // Update the visibility of tables based on checkbox states
+    }
+
+    private fun handleMeasurementCheckboxChange(isChecked: Boolean) {
+        binding.layoutMeasurement.visibility = if (isChecked) View.VISIBLE else View.GONE
+        binding.ScrollViewMeasurement.visibility = if (isChecked) View.VISIBLE else View.GONE
+        updateButtonText()
+        showRelevantTables() // Update the visibility of tables based on checkbox states
+        updateAttendanceCheckboxVisibility()
+
+    }
+
+    private fun handleRatingCheckboxChange(isChecked: Boolean) {
+        binding.layoutRating.visibility = if (isChecked) View.VISIBLE else View.GONE
+        binding.idTableLayoutRatings.visibility = if (isChecked) View.VISIBLE else View.GONE
+        updateButtonText()
+        showRelevantTables() // Update the visibility of tables based on checkbox states
+        updateAttendanceCheckboxVisibility()
+    }
+
+    private fun updateAttendanceCheckboxVisibility() {
+        val isMeasurementChecked = binding.checkBoxMeasurement.isChecked
+        val isRatingChecked = binding.checkBoxRating.isChecked
+
+        // Show the attendance checkbox if either measurement or rating is checked
+        binding.checkBoxAttendance.visibility = if (isMeasurementChecked || isRatingChecked) View.VISIBLE else View.GONE
+
+        // Uncheck the attendance checkbox if both measurement and rating are unchecked
+        if (!isMeasurementChecked && !isRatingChecked) {
+            binding.checkBoxAttendance.isChecked = false
+        }
+    }
+
+    private fun showRelevantTables() {
+        val isAttendanceChecked = binding.checkBoxAttendance.isChecked
+        val isMeasurementChecked = binding.checkBoxMeasurement.isChecked
+        val isRatingChecked = binding.checkBoxRating.isChecked
+
+        // Show measurement table if measurement checkbox is checked
+        binding.ScrollViewMeasurement.visibility = if (isMeasurementChecked) View.VISIBLE else View.GONE
+
+        // Show ratings table if rating checkbox is checked
+        binding.ScrollViewRatings.visibility = if (isRatingChecked) View.VISIBLE else View.GONE
+
+        // Show attendance table if attendance checkbox is checked while other checkboxes are checked
+        if (isMeasurementChecked || isRatingChecked){
+            binding.ScrollViewAttendance.visibility = if (isAttendanceChecked) View.VISIBLE else View.GONE
+        }
+        // Show default table if no checkbox are checked
+        else {
+            showDefaultTable()
+        }
+    }
+
+    private fun updateButtonText() {
+        val isAttendanceChecked = binding.checkBoxAttendance.isChecked
+        val isMeasurementChecked = binding.checkBoxMeasurement.isChecked
+        val isRatingChecked = binding.checkBoxRating.isChecked
+
+        binding.idBtnAddRow.text = when {
+            isAttendanceChecked && isMeasurementChecked && isRatingChecked -> "Log Attendance, Measurement & Ratings"
+            isAttendanceChecked && isMeasurementChecked -> "Log Attendance & Measurement"
+            isAttendanceChecked && isRatingChecked -> "Log Attendance & Ratings"
+            isMeasurementChecked && isRatingChecked -> "Log Measurement & Ratings"
+            isAttendanceChecked -> "Log Attendance"
+            isMeasurementChecked -> "Log Measurement"
+            isRatingChecked -> "Log Ratings"
+            else -> "Log Attendance" // Default text when no checkboxes are selected
+        }
+    }
+
+    private fun showDefaultTable() {
+        binding.ScrollViewAttendance.visibility = View.VISIBLE
+        binding.ScrollViewMeasurement.visibility = View.GONE
+        binding.ScrollViewRatings.visibility = View.GONE
+    }
+
+    private fun displayInAttendanceTable(name: String, lrn: String, timestamp: String) {
+        if (binding.idTableLayoutAttendance.childCount == 1) {
+            binding.idTableLayoutAttendance.removeViewAt(1) // Remove placeholder if it exists
+        }
+        binding.idTableLayoutAttendance.addView(createTableRow(name, lrn, timestamp))
+    }
+
+    private fun displayInMeasurementTable(name: String, lrn: String, height: String, weight: String) {
+        if (binding.idTableLayoutMeasurement.childCount == 1) {
+            binding.idTableLayoutMeasurement.removeViewAt(1) // Remove placeholder if it exists
+        }
         for (i in 0 until binding.idTableLayoutMeasurement.childCount) {
             val tableRow = binding.idTableLayoutMeasurement.getChildAt(i) as? TableRow
             tableRow?.let {
                 val lrnTextView = it.getChildAt(1) as? TextView
                 if (lrnTextView?.text.toString() == lrn) {
-                    // Update the existing row's height and weight
-                    val heightTextView = it.getChildAt(2) as? TextView
-                    val weightTextView = it.getChildAt(3) as? TextView
-                    heightTextView?.text = height
-                    weightTextView?.text = weight
+                    it.getChildAt(2).apply { (this as TextView).text = height }
+                    it.getChildAt(3).apply { (this as TextView).text = weight }
+                    return
+                }
+            }
+        }
+        binding.idTableLayoutMeasurement.addView(createTableRow(name, lrn, height, weight))
+    }
+
+    private fun displayInRatingsTable(name: String, lrn: String, numeracy: String?, literacy: String?) {
+        // Check if the table already has a row for the given name
+        for (i in 0 until binding.idTableLayoutRatings.childCount) {
+            val tableRow = binding.idTableLayoutRatings.getChildAt(i) as? TableRow
+            tableRow?.let {
+                val nameTextView = it.getChildAt(0) as? TextView // Assuming name is in the first column
+                if (nameTextView?.text.toString() == name) {
+                    // Update existing row
+                    it.getChildAt(1).apply { (this as TextView).text = literacy }
+                    it.getChildAt(2).apply { (this as TextView).text = numeracy }
                     return
                 }
             }
         }
 
-        // If no row with the same LRN exists, add a new row
-        val tableRow = createTableRow(name, lrn, height, weight)
-        binding.idTableLayoutMeasurement.addView(tableRow)
+        // If no existing row was found, add a new row
+        binding.idTableLayoutRatings.addView(createTableRow(name, literacy.toString(), numeracy.toString()))
     }
-
-
-    private fun createTableRow(vararg cellTexts: String): TableRow {
-        val tableRow = TableRow(requireContext())
-        cellTexts.forEach { text ->
-            val textView = TextView(requireContext()).apply {
-                this.text = text
-                setPadding(10, 10, 10, 10)
-                textAlignment = View.TEXT_ALIGNMENT_CENTER
-                gravity = Gravity.CENTER
-            }
-            tableRow.addView(textView)
-        }
-        tableRow.gravity = Gravity.CENTER
-        return tableRow
-    }
-
-    private fun fetchAndDisplayCurrentDateCollection() {
-        val currentDate = getCurrentTimestamp("yyyy-MM-dd")
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val students = firebaseHelper.getStudentsFromDateCollection(currentDate)
-                students.forEach { student ->
-                    displayInTableAttendance(student.name, student.lrn, student.timestamp)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                showToast("Failed to fetch current date collection")
-            }
-        }
-    }
-
-    private fun fetchAndDisplayMeasurementCollection() {
-        val currentDate = getCurrentTimestamp("yyyy-MM-dd")
-        viewLifecycleOwner.lifecycleScope.launch {
-
-            try {
-                val students = firebaseHelper.getStudentsFromMeasurementsCollection()
-                    .filter { it.timestamp.startsWith(currentDate) } // Filter for current day
-                students.forEach { student ->
-                    displayInMeasurementTable(
-                        student.name,
-                        student.lrn,
-                        student.height.toString(),
-                        student.weight.toString()
-                    )
-
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                showToast("Failed to fetch measurement collection")
-            }
-        }
-    }
-
-
 
     fun updateScannedData(scannedData: String) {
         val qrCodeData = scannedData.trim()
@@ -368,13 +448,8 @@ class DashboardFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                // Use getStudentByQR to fetch student details
-                val student = firebaseHelper.getStudentByQR(qrCodeData)
-                student?.let {
-                    addStudentToAttendanceTable(
-                        it.name,
-                        it.lrn
-                    ) // Ensure `it.name` and `it.lrn` are valid
+                firebaseHelper.getStudentByQR(qrCodeData)?.let {
+                    addStudentToAttendanceTable(it.name, it.lrn)
                 } ?: showToast("Invalid QR code scanned")
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -382,7 +457,6 @@ class DashboardFragment : Fragment() {
             }
         }
     }
-
 
     private fun getCurrentTimestamp(format: String): String {
         return SimpleDateFormat(format, Locale.getDefault()).format(Date())

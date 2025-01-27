@@ -1,254 +1,405 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<androidx.core.widget.NestedScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp"
+    android:paddingBottom="100dp"
     tools:context="ui.dashboard.DashboardFragment">
 
-    <!-- Section for Input Fields -->
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
-
-        <AutoCompleteTextView
-            android:id="@+id/idEdtName"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="50dp"
-            android:layout_marginEnd="20dp"
-            android:hint="Name"
-            android:importantForAutofill="yes"
-            android:inputType="textPersonName"
-            android:padding="10dp"
-            tools:ignore="LabelFor,SpeakableTextPresentCheck" />
-
-
-        <AutoCompleteTextView
-            android:id="@+id/idEdtLRN"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginEnd="20dp"
-            android:layout_marginBottom="20dp"
-            android:hint="LRN"
-            android:importantForAutofill="yes"
-            android:inputType="textPersonName"
-            android:padding="10dp"
-            tools:ignore="LabelFor,SpeakableTextPresentCheck" />
-
-        <CheckBox
-            android:id="@+id/checkBoxMeasurement"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Add Measurement" />
-
-    </LinearLayout>
-
-    <!-- Button to Add Rows -->
-
-    <!-- Table for Displaying Rows -->
-
-    <LinearLayout
-        android:id="@+id/layoutMeasurement"
-        android:layout_width="match_parent"
-        android:layout_height="207dp"
         android:orientation="vertical"
-        android:visibility="gone">
+        android:padding="10dp"
+        android:paddingBottom="50dp"> <!-- Increased bottom padding -->
 
-        <AutoCompleteTextView
-            android:id="@+id/idEdtHeight"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginEnd="20dp"
-            android:hint="Height (in cm)"
-            android:importantForAutofill="yes"
-            android:inputType="textPersonName"
-            android:padding="10dp"
-            tools:ignore="LabelFor,SpeakableTextPresentCheck" />
-
-        <AutoCompleteTextView
-            android:id="@+id/idEdtWeight"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginEnd="20dp"
-            android:layout_marginBottom="20dp"
-            android:hint="Weight (in kg)"
-            android:importantForAutofill="yes"
-            android:inputType="textPersonName"
-            android:padding="10dp"
-            tools:ignore="LabelFor,SpeakableTextPresentCheck" />
-
-        <CheckBox
-            android:id="@+id/checkBoxAttendance"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Log Attendance" />
-
-    </LinearLayout>
-    <Button
-        android:id="@+id/idBtnClear"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:backgroundTint="@color/my_primary"
-        android:padding="12dp"
-        android:text="Clear"
-        android:textColor="@android:color/white" />
-    <Button
-        android:id="@+id/idBtnAddRow"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:backgroundTint="@color/my_primary"
-        android:padding="12dp"
-        android:text="Log Feeding Attendance"
-        android:textColor="@android:color/white" />
-
-
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="355dp">
-
+        <!-- Section for Input Fields -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <HorizontalScrollView
-                android:id="@+id/ScrollViewAttendance"
+            <AutoCompleteTextView
+                android:id="@+id/idEdtName"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="48dp"
+                android:layout_marginTop="50dp"
+                android:layout_marginBottom="20dp"
+                android:hint="Name"
+                android:importantForAutofill="yes"
+                android:inputType="textPersonName"
+                android:padding="10dp" />
 
-                <TableLayout
-                    android:id="@+id/idTableLayoutAttendance"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:stretchColumns="*">
-
-                    <!-- Table Header Row -->
-                    <TableRow android:background="@color/my_primary">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:padding="8dp"
-                            android:text="Name"
-                            android:textColor="@android:color/white"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:padding="8dp"
-                            android:text="LRN"
-                            android:textColor="@android:color/white"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:padding="8dp"
-                            android:text="Timestamp"
-                            android:textColor="@android:color/white"
-                            android:textStyle="bold" />
-
-
-                    </TableRow>
-
-                </TableLayout>
-            </HorizontalScrollView>
-
-            <HorizontalScrollView
-                android:id="@+id/ScrollViewMeasurement"
+            <AutoCompleteTextView
+                android:id="@+id/idEdtLRN"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:visibility="gone">
+                android:layout_height="48dp"
+                android:layout_marginBottom="20dp"
+                android:hint="LRN"
+                android:importantForAutofill="yes"
+                android:inputType="textPersonName"
+                android:padding="10dp" />
 
-                <TableLayout
-                    android:id="@+id/idTableLayoutMeasurement"
+            <!-- Checkboxes for Measurement and Rating -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <CheckBox
+                    android:id="@+id/checkBoxMeasurement"
                     android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:stretchColumns="*">
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="16dp"
+                    android:text="Add Measurement" />
 
-                    <TableRow
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
-
-                    <TableRow
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
-
-                    <TableRow
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
-
-                    <TableRow
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
-
-                    <TableRow
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@color/my_primary">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:padding="8dp"
-                            android:text="Name"
-                            android:textColor="@android:color/white"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:padding="8dp"
-                            android:text="LRN"
-                            android:textColor="@android:color/white"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:padding="8dp"
-                            android:text="Height"
-                            android:textColor="@android:color/white"
-                            android:textStyle="bold"
-                            android:visibility="visible" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:padding="8dp"
-                            android:text="Weight"
-                            android:textColor="@android:color/white"
-                            android:textStyle="bold" />
-
-
-
-
-
-                    </TableRow>
-                </TableLayout>
-            </HorizontalScrollView>
+                <CheckBox
+                    android:id="@+id/checkBoxRating"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Add Rating" />
+            </LinearLayout>
         </LinearLayout>
-    </ScrollView>
 
-</LinearLayout>
+        <!-- Measurement Section -->
+        <LinearLayout
+            android:id="@+id/layoutMeasurement"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <AutoCompleteTextView
+                android:id="@+id/idEdtHeight"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="20dp"
+                android:hint="Height (in cm)"
+                android:importantForAutofill="yes"
+                android:inputType="number"
+                android:padding="10dp" />
+
+            <AutoCompleteTextView
+                android:id="@+id/idEdtWeight"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="20dp"
+                android:hint="Weight (in kg)"
+                android:importantForAutofill="yes"
+                android:inputType="number"
+                android:padding="10dp" />
+        </LinearLayout>
+
+        <!-- Rating Section -->
+        <LinearLayout
+            android:id="@+id/layoutRating"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:padding="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Literacy Rating"
+                android:textSize="16sp"
+                android:padding="4dp" />
+
+            <SeekBar
+                android:id="@+id/sliderLiteracy"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="10" />
+
+            <TextView
+                android:id="@+id/literacyValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Value: 0"
+                android:padding="4dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Numeracy Rating"
+                android:textSize="16sp"
+                android:padding="4dp" />
+
+            <SeekBar
+                android:id="@+id/sliderNumeracy"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="10" />
+
+            <TextView
+                android:id="@+id/numeracyValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Value: 0"
+                android:padding="4dp" />
+        </LinearLayout>
+
+        <!-- Log Attendance Checkbox -->
+        <CheckBox
+            android:id="@+id/checkBoxAttendance"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Log Attendance" />
+
+        <!-- Buttons -->
+        <Button
+            android:id="@+id/idBtnClear"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/my_primary"
+            android:padding="12dp"
+            android:text="Clear"
+            android:textColor="@android:color/white" />
+
+        <Button
+            android:id="@+id/idBtnAddRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/my_primary"
+            android:padding="12dp"
+            android:text="Log Attendance"
+            android:textColor="@android:color/white" />
+
+        <!-- Ratings Table -->
+        <HorizontalScrollView
+            android:id="@+id/ScrollViewRatings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone">
+
+            <TableLayout
+                android:id="@+id/idTableLayoutRatings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:stretchColumns="*">
+
+                <!-- Placeholder Row -->
+                <TableRow>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text=""
+                        android:textColor="@android:color/black" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text=""
+                        android:textColor="@android:color/black" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text=""
+                        android:textColor="@android:color/black" />
+                </TableRow>
+
+                <TableRow android:background="@color/my_primary">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text="Name"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text="Filipino"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text="Math"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold" />
+                </TableRow>
+            </TableLayout>
+        </HorizontalScrollView>
+
+        <!-- Attendance Table -->
+        <HorizontalScrollView
+            android:id="@+id/ScrollViewAttendance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TableLayout
+                android:id="@+id/idTableLayoutAttendance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:stretchColumns="*">
+
+                <!-- Placeholder Row -->
+                <TableRow>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text=""
+                        android:textColor="@android:color/black" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text=""
+                        android:textColor="@android:color/black" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text=""
+                        android:textColor="@android:color/black" />
+                </TableRow>
+
+                <TableRow android:background="@color/my_primary">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text="Name"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text="LRN"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text="Timestamp"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold" />
+                </TableRow>
+            </TableLayout>
+        </HorizontalScrollView>
+
+        <!-- Measurement Table -->
+        <HorizontalScrollView
+            android:id="@+id/ScrollViewMeasurement"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone">
+
+            <TableLayout
+                android:id="@+id/idTableLayoutMeasurement"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:stretchColumns="*">
+
+                <!-- Placeholder Row -->
+                <TableRow>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text=""
+                        android:textColor="@android:color/black" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text=""
+                        android:textColor="@android:color/black" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text=""
+                        android:textColor="@android:color/black" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text=""
+                        android:textColor="@android:color/black" />
+                </TableRow>
+
+                <TableRow android:background="@color/my_primary">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text="Name"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text="LRN"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text="Height"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text="Weight"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold" />
+                </TableRow>
+            </TableLayout>
+        </HorizontalScrollView>
+
+        <!-- Add some space between tables -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="16dp" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
