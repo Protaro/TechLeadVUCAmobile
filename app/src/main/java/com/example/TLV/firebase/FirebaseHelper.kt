@@ -1,5 +1,6 @@
 package com.example.TLV.firebase
 
+import android.util.Log
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -23,10 +24,10 @@ data class StudentMeasurement(
 )
 
 data class StudentRatings(
-    val lrn: String,
-    val numeracy: Float?,
-    val literacy: Float?,
-    val timestamp: String?
+    val lrn: String = "",
+    val numeracy: String? = null, // Allow null values
+    val literacy: String? = null,  // Allow null values
+    val timestamp: String? = null    // Allow null values
 )
 
 class FirebaseHelper {
@@ -142,9 +143,9 @@ class FirebaseHelper {
     // Get existing document based on LRN and date
     private suspend fun getExistingDocument(collection: String, lrn: String, currentDate: String) =
         firestore.collection(collection)
-            .whereEqualTo("LRN", lrn)
-            .whereGreaterThanOrEqualTo("Timestamp", "$currentDate 00:00:00")
-            .whereLessThanOrEqualTo("Timestamp", "$currentDate 23:59:59")
+            .whereEqualTo("lrn", lrn)
+            .whereGreaterThanOrEqualTo("timestamp", "$currentDate 00:00:00")
+            .whereLessThanOrEqualTo("timestamp", "$currentDate 23:59:59")
             .get()
             .await()
             .documents.firstOrNull()
@@ -153,9 +154,9 @@ class FirebaseHelper {
     private suspend fun updateExistingMeasurement(existingDocument: com.google.firebase.firestore.DocumentSnapshot, height: Float, weight: Float, timestamp: String) {
         existingDocument.reference.update(
             mapOf(
-                "Height" to height,
-                "Weight" to weight,
-                "Timestamp" to timestamp
+                "height" to height,
+                "weight" to weight,
+                "timestamp" to timestamp
             )
         ).await()
     }
@@ -163,11 +164,11 @@ class FirebaseHelper {
     // Add a new measurement record
     private suspend fun addNewMeasurement(name: String, lrn: String, height: Float, weight: Float, timestamp: String) {
         val newStudentMeasurement = hashMapOf(
-            "Name" to name,
-            "LRN" to lrn,
-            "Height" to height,
-            "Weight" to weight,
-            "Timestamp" to timestamp
+            "name" to name,
+            "lrn" to lrn,
+            "height" to height,
+            "weight" to weight,
+            "timestamp" to timestamp
         )
         firestore.collection("Measurements").add(newStudentMeasurement).await()
     }
@@ -192,16 +193,16 @@ class FirebaseHelper {
             // Update existing record
             existingDocument.reference.update(
                 mapOf(
-                    "Rating" to rating,
-                    "Timestamp" to timestamp
+                    "rating" to rating,
+                    "timestamp" to timestamp
                 )
             ).await()
         } else {
             // Add new record
             val newRecord = hashMapOf(
-                "LRN" to lrn,
-                "Rating" to rating,
-                "Timestamp" to timestamp
+                "lrn" to lrn,
+                "rating" to rating,
+                "timestamp" to timestamp
             )
             firestore.collection(collectionName).add(newRecord).await()
         }
@@ -233,13 +234,13 @@ class FirebaseHelper {
 
     // Get students from the measurements collection
     suspend fun getStudentsFromMeasurementsCollection(): List<StudentMeasurement> {
-        val snapshot = firestore.collection("Measurements").orderBy("Timestamp").get().await()
+        val snapshot = firestore.collection("Measurements").orderBy("timestamp").get().await()
         return snapshot.documents.mapNotNull { document ->
-            val name = document.getString("Name")
-            val lrn = document.getString("LRN")
-            val height = document.getDouble("Height")?.toFloat()
-            val weight = document.getDouble("Weight")?.toFloat()
-            val timestamp = document.getString("Timestamp")
+            val name = document.getString("name")
+            val lrn = document.getString("lrn")
+            val height = document.getDouble("height")?.toFloat()
+            val weight = document.getDouble("weight")?.toFloat()
+            val timestamp = document.getString("timestamp")
             if (name != null && lrn != null && timestamp != null) {
                 StudentMeasurement(name, lrn, height, weight, timestamp)
             } else null
@@ -267,15 +268,27 @@ class FirebaseHelper {
 
     // Get ratings map for a specific collection
     private suspend fun getRatingsMap(collectionName: String): MutableMap<String, StudentRatings> {
-        val snapshot = firestore.collection(collectionName).orderBy("Timestamp").get().await()
-        return snapshot.documents.mapNotNull {
-            val lrn = it.getString("LRN")
-            val rating = it.getDouble("Rating")?.toFloat()
-            val timestamp = it.getString("Timestamp")
-            if (lrn != null && rating != null && timestamp != null) {
-                lrn to StudentRatings(lrn, rating, null, timestamp)
-            } else null
-        }.toMap().toMutableMap()
+        Log.d("FirebaseHelper", "Fetching ratings from collection: $collectionName")
+        return try {
+            val snapshot = firestore.collection(collectionName).orderBy("timestamp").get().await()
+            Log.d("FirebaseHelper", "Fetched ${snapshot.size()} documents from $collectionName")
+
+            snapshot.documents.mapNotNull {
+                val lrn = it.getString("lrn") // Ensure the field name matches exactly
+                val rating = it.getString("rating") // Get the rating as a String
+                val timestamp = it.getString("timestamp") // Ensure the field name matches exactly
+
+                if (lrn != null && rating != null && timestamp != null) {
+                    lrn to StudentRatings(lrn, rating, rating, timestamp) // Store rating as a String
+                } else {
+                    Log.w("FirebaseHelper", "Document missing required fields: $it")
+                    null
+                }
+            }.toMap().toMutableMap()
+        } catch (e: Exception) {
+            Log.e("FirebaseHelper", "Error fetching ratings from $collectionName: ${e.message}", e)
+            mutableMapOf() // Return an empty map on error
+        }
     }
 
     private fun getCurrentDate(): String {

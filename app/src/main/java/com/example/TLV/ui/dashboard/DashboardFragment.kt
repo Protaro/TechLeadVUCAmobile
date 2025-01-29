@@ -185,8 +185,8 @@ class DashboardFragment : Fragment() {
         val currentDate = getCurrentTimestamp("yyyy-MM-dd")
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                firebaseHelper.getStudentsFromRatingsCollection()
-                    .filter { it.timestamp?.startsWith(currentDate) == true }
+                val ratings = firebaseHelper.getStudentsFromRatingsCollection()
+                ratings.filter { it.timestamp?.startsWith(currentDate) == true }
                     .forEach { rating ->
                         firebaseHelper.getStudentByLRN(rating.lrn)?.let { studentDetails ->
                             displayInRatingsTable(studentDetails.name, rating.lrn, rating.numeracy.toString(), rating.literacy.toString())
@@ -194,7 +194,7 @@ class DashboardFragment : Fragment() {
                     }
             } catch (e: Exception) {
                 e.printStackTrace()
-                showToast("Failed to fetch ratings collection")
+                showToast("Failed to fetch ratings collection: ${e.message}")
             }
         }
     }
@@ -249,7 +249,11 @@ class DashboardFragment : Fragment() {
 
         // Check if ratings should be logged
         if (binding.checkBoxRating.isChecked) {
-            addStudentToRatingTable(name, lrn, literacy, numeracy)
+            addStudentToRatingTable(name, lrn, numeracy, literacy)
+        }
+
+        if (!binding.checkBoxRating.isChecked && !binding.checkBoxMeasurement.isChecked && !binding.checkBoxAttendance.isChecked) {
+            addStudentToAttendanceTable(name, lrn)
         }
     }
 
