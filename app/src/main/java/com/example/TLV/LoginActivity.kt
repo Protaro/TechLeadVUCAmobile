@@ -71,15 +71,15 @@ class LoginActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityList
 
         // Load saved email if "Remember Me" was checked
         // Retrieve saved email (always saved)
-val rememberedEmail = sharedPreferences.getString(REMEMBERED_EMAIL, null)
+        val rememberedEmail = sharedPreferences.getString(REMEMBERED_EMAIL, null)
 
 // Check if "Remember Me" was previously checked
-val wasRememberMeChecked = sharedPreferences.getBoolean("remember_me", false)
+        val wasRememberMeChecked = sharedPreferences.getBoolean("remember_me", false)
 
-if (wasRememberMeChecked && !rememberedEmail.isNullOrEmpty()) {
-    emailEdt.setText(rememberedEmail) // Auto-fill only if "Remember Me" was checked before
-    rememberMeCheckBox.isChecked = true // Reflect previous selection
-}
+        if (wasRememberMeChecked && !rememberedEmail.isNullOrEmpty()) {
+            emailEdt.setText(rememberedEmail) // Auto-fill only if "Remember Me" was checked before
+            rememberMeCheckBox.isChecked = true // Reflect previous selection
+        }
         // Email validation
         emailEdt.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -162,29 +162,30 @@ if (wasRememberMeChecked && !rememberedEmail.isNullOrEmpty()) {
     }
 
     private fun loginUser(email: String, password: String, rememberMe: Boolean) {
-    auth.signInWithEmailAndPassword(email, password)
-        .addOnCompleteListener(this) { task ->
-            if (task.isSuccessful) {
-                val editor = sharedPreferences.edit()
+        auth.signInWithEmailAndPassword(email, password)
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    val editor = sharedPreferences.edit()
 
-                // Always save the email
-                editor.putString(REMEMBERED_EMAIL, email)
+                    // Always save the email
+                    editor.putString(REMEMBERED_EMAIL, email)
 
-                // Only remember for auto-fill if "Remember Me" was checked
-                editor.putBoolean("remember_me", rememberMe)
+                    // Only remember for auto-fill if "Remember Me" was checked
+                    editor.putBoolean("remember_me", rememberMe)
 
-                // Save login status
-                editor.putBoolean("isLoggedIn", true)
-                editor.putLong("logTime", System.currentTimeMillis())
-                editor.apply()
+                    // Save login status
+                    editor.putBoolean("isLoggedIn", true)
+                    editor.putLong("logTime", System.currentTimeMillis())
+                    editor.apply()
 
-                // Navigate to MainActivity
-                val intent = Intent(this, MainActivity::class.java)
-                startActivity(intent)
-                finish()
-            } else {
-                val errorMessage = task.exception?.message ?: "Authentication failed"
-                Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
+                    // Navigate to MainActivity
+                    val intent = Intent(this, MainActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                } else {
+                    val errorMessage = task.exception?.message ?: "Authentication failed"
+                    Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
+                }
             }
-        }
+    }
 }
