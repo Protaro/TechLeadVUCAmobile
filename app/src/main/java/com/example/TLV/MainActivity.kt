@@ -2,11 +2,7 @@
 
 package com.example.TLV
 
-import ConnectivityReceiver
-import android.app.Activity
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -20,18 +16,15 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.TLV.databinding.ActivityMainBinding
-import com.example.TLV.firebase.FirebaseHelper
 import com.example.TLV.ui.dashboard.DashboardFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.zxing.integration.android.IntentIntegrator
 import kotlinx.coroutines.launch
 
-class MainActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityListener {
+class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var sharedPreferences: android.content.SharedPreferences
-    private lateinit var connectivityReceiver: ConnectivityReceiver
-    private val firebaseHelper = FirebaseHelper()
 
 
     companion object {
@@ -43,12 +36,11 @@ class MainActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityListe
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        sharedPreferences = getSharedPreferences(SHARED_PREFS, Context.MODE_PRIVATE)
+        sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE)
 
         setupToolbar()
         setupBottomNavigation()
         setupLogoutButton()
-        setupConnectivityReceiver()
         setupQRScanner()
     }
 
@@ -61,16 +53,16 @@ class MainActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityListe
         val navController: NavController = navHostFragment.navController
 
         val appBarConfiguration = AppBarConfiguration(
-            setOf(R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications)
+            setOf(R.id.navigation_dashboard)
         )
 
         setupActionBarWithNavController(navController, appBarConfiguration)
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
             toolbar.title = when (destination.id) {
-                R.id.navigation_home -> "Home"
+
                 R.id.navigation_dashboard -> "Dashboard"
-                R.id.navigation_notifications -> "Notifications"
+
                 else -> "App"
             }
         }
@@ -98,16 +90,10 @@ class MainActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityListe
         }
     }
 
-    private fun setupConnectivityReceiver() {
-        connectivityReceiver = ConnectivityReceiver(this)
-        val intentFilter = IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION)
-        registerReceiver(connectivityReceiver, intentFilter)
-    }
-
     private fun setupQRScanner() {
         val qrScannerLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
+                if (result.resultCode == RESULT_OK) {
                     val scannedData = result.data?.getStringExtra("SCAN_RESULT")
                     if (scannedData != null) {
                         lifecycleScope.launch {
@@ -131,7 +117,7 @@ class MainActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityListe
     }
 
 
-    private suspend fun handleScannedData(scannedData: String?) {
+    private fun handleScannedData(scannedData: String?) {
         if (scannedData != null) {
             Log.d("QRScan", "Scanned Data: $scannedData")
             val navHostFragment =
@@ -151,30 +137,11 @@ class MainActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityListe
             val navController =
                 (supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_dashboard) as NavHostFragment).navController
             navController.navigate(R.id.navigation_dashboard, bundle)
-
-            firebaseHelper.uploadScannedLRNToFirebase(scannedData)
         } else {
             Log.e("QRScan", "No data received from QR scanner.")
         }
     }
 
-
-    override fun onDestroy() {
-        super.onDestroy()
-        unregisterReceiver(connectivityReceiver)
-    }
-
-    override fun onNetworkConnectionChanged(isConnected: Boolean) {
-        if (!isConnected) {
-            Toast.makeText(
-                this,
-                "No internet connection. Switching to offline mode.",
-                Toast.LENGTH_SHORT
-            ).show()
-            startActivity(Intent(this, OfflineActivity::class.java))
-            finish()
-        }
-    }
 
     override fun onSupportNavigateUp(): Boolean {
         val navController =

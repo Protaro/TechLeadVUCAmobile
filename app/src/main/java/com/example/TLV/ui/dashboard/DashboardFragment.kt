@@ -186,10 +186,10 @@ class DashboardFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val ratings = firebaseHelper.getStudentsFromRatingsCollection()
-                ratings.filter { it.timestamp?.startsWith(currentDate) == true }
+                ratings.filter { it.timestamp.startsWith(currentDate) }
                     .forEach { rating ->
                         firebaseHelper.getStudentByLRN(rating.lrn)?.let { studentDetails ->
-                            displayInRatingsTable(studentDetails.name, rating.lrn, rating.numeracy.toString(), rating.literacy.toString())
+                            displayInRatingsTable(rating.lrn, rating.numeracy, rating.literacy)
                         }
                     }
             } catch (e: Exception) {
@@ -263,7 +263,7 @@ class DashboardFragment : Fragment() {
             try {
                 Log.d("Attendance", "Adding student: Name=$name, LRN=$lrn, Timestamp=$timestamp")
                 if (firebaseHelper.checkStudentInAttendanceCollection(lrn)) {
-                    firebaseHelper.addStudentToAttendanceCollection(name, lrn, timestamp)
+                    firebaseHelper.addStudentToAttendanceCollection(name, lrn)
                     displayInAttendanceTable(name, lrn, timestamp)
                 } else {
                     showToast("Student already in attendance database")
@@ -297,7 +297,7 @@ class DashboardFragment : Fragment() {
                 firebaseHelper.addStudentToLiteracyCollection(lrn, literacy, timestamp)
                 // Add to Numeracy Scores
                 firebaseHelper.addStudentToNumeracyCollection(lrn, numeracy, timestamp)
-                displayInRatingsTable(name, lrn, numeracy, literacy)
+                displayInRatingsTable(name, lrn, numeracy)
             } catch (e: Exception) {
                 e.printStackTrace()
                 showToast("Error adding student to ratings database: ${e.message}")
@@ -424,7 +424,7 @@ class DashboardFragment : Fragment() {
         binding.idTableLayoutMeasurement.addView(createTableRow(name, lrn, height, weight))
     }
 
-    private fun displayInRatingsTable(name: String, lrn: String, numeracy: String?, literacy: String?) {
+    private fun displayInRatingsTable(name: String, numeracy: String?, literacy: String?) {
         // Check if the table already has a row for the given name
         for (i in 0 until binding.idTableLayoutRatings.childCount) {
             val tableRow = binding.idTableLayoutRatings.getChildAt(i) as? TableRow
