@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <AutoCompleteTextView
+            android:id="@+id/idEdtName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Name" />
+
+        <AutoCompleteTextView
+            android:id="@+id/idEdtLRN"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="LRN" />
+
+        <SeekBar
+            android:id="@+id/sliderLiteracy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="10" />
+        <TextView
+            android:id="@+id/literacyValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Filipino: 0" />
+
+        <SeekBar
+            android:id="@+id/sliderNumeracy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="10" />
+        <TextView
+            android:id="@+id/numeracyValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Math: 0" />
+
+        <CheckBox
+            android:id="@+id/checkBoxAttendance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Log Attendance" />
+
+        <Button
+            android:id="@+id/idBtnAddRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Log Scores" />
+
+        <Button
+            android:id="@+id/idBtnClear"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Clear" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TableLayout
+                android:id="@+id/idTableLayoutAttendance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:stretchColumns="*">
+
+                <TableRow
+                    android:background="@color/my_primary"
+                    android:padding="8dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Name"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold"
+                        android:padding="5dp"
+                        android:gravity="center" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Filipino"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold"
+                        android:padding="5dp"
+                        android:gravity="center" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Math"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold"
+                        android:padding="5dp"
+                        android:gravity="center" />
+                </TableRow>
+            </TableLayout>
+        </HorizontalScrollView>
+    </LinearLayout>
+</ScrollView>

@@ -21,7 +21,9 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.TLV.databinding.ActivityMainBinding
 import com.example.TLV.firebase.FirebaseHelper
-import com.example.TLV.ui.dashboard.DashboardFragment
+import com.example.TLV.ui.AttendanceFragment
+import com.example.TLV.ui.MeasurementFragment
+import com.example.TLV.ui.ScoreFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.zxing.integration.android.IntentIntegrator
 import kotlinx.coroutines.launch
@@ -61,17 +63,17 @@ class MainActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityListe
         val navController: NavController = navHostFragment.navController
 
         val appBarConfiguration = AppBarConfiguration(
-            setOf(R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications)
+            setOf(R.id.navigation_attendance, R.id.navigation_measurement, R.id.navigation_scores)
         )
 
         setupActionBarWithNavController(navController, appBarConfiguration)
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
             toolbar.title = when (destination.id) {
-                R.id.navigation_home -> "Home"
-                R.id.navigation_dashboard -> "Dashboard"
-                R.id.navigation_notifications -> "Notifications"
-                else -> "App"
+                R.id.navigation_attendance -> "Attendance"
+                R.id.navigation_measurement -> "Measurement"
+                R.id.navigation_scores -> "Scores"
+                else -> "Default"
             }
         }
     }
@@ -137,12 +139,12 @@ class MainActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityListe
             val navHostFragment =
                 supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_dashboard) as? NavHostFragment
             val currentFragment = navHostFragment?.childFragmentManager?.fragments?.firstOrNull {
-                it is DashboardFragment
-            } as? DashboardFragment
+                it is AttendanceFragment
+            } as? AttendanceFragment
 
             currentFragment?.updateScannedData(scannedData) ?: Log.e(
                 "MainActivity",
-                "DashboardFragment not active or not found"
+                "AttendanceFragment not active or not found"
             )
 
             val bundle = Bundle().apply {
@@ -150,7 +152,7 @@ class MainActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityListe
             }
             val navController =
                 (supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_dashboard) as NavHostFragment).navController
-            navController.navigate(R.id.navigation_dashboard, bundle)
+            navController.navigate(R.id.navigation_attendance, bundle)
 
             firebaseHelper.uploadScannedLRNToFirebase(scannedData)
         } else {
