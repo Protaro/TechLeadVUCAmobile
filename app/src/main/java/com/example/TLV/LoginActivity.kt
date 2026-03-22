@@ -28,9 +28,18 @@ class LoginActivity : AppCompatActivity() {
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_login)
 
-        // Register the connectivity receiver
+        auth = FirebaseAuth.getInstance()
+
+        // Check if user is already signed in
+        if (auth.currentUser != null) {
+            // Already logged in → go directly to Main
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+            return
+        }
+
+        setContentView(R.layout.activity_login)
 
         // Initialize Firebase Auth and SharedPreferences
         auth = FirebaseAuth.getInstance()
@@ -118,5 +127,14 @@ class LoginActivity : AppCompatActivity() {
                     Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
                 }
             }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+        }
     }
 }

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <com.journeyapps.barcodescanner.ViewfinderView
+        android:id="@+id/zxing_viewfinder_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:ignore="MissingConstraints" />
+
+    <!-- Semi-transparent background outside the guide -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000" />
+
+    <!-- Guide rectangle in center -->
+    <View
+        android:id="@+id/scan_border"
+        android:layout_width="260dp"
+        android:layout_height="260dp"
+        android:layout_gravity="center"
+        android:background="@drawable/qr_scan_border" />
+
+    <!-- Cancel button at bottom -->
+    <Button
+        android:id="@+id/btn_cancel_scan"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="48dp"
+        android:text="Cancel"
+        android:textColor="@android:color/white"
+        android:backgroundTint="#AA000000"
+        android:paddingHorizontal="32dp"
+        android:paddingVertical="12dp" />
+
+</merge>

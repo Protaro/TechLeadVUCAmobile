@@ -169,14 +169,14 @@ class FirebaseHelper {
     }
 
     // Add a student to the literacy collection
-    suspend fun addStudentToLiteracyCollection(lrn: String, rating: String?, timestamp: String) {
-        ensureCollectionExists("Literacy_Scores")
-        addStudentToScoreCollection("Literacy_Scores", lrn, rating, timestamp)
+    suspend fun addStudentToFilipinoCollection(lrn: String, rating: String?, timestamp: String) {
+        ensureCollectionExists("Filipino Scores")
+        addStudentToScoreCollection("Filipino Scores", lrn, rating, timestamp)
     }
 
-    suspend fun addStudentToNumeracyCollection(lrn: String, rating: String?, timestamp: String) {
-        ensureCollectionExists("Numeracy_Scores")
-        addStudentToScoreCollection("Numeracy_Scores", lrn, rating, timestamp)
+    suspend fun addStudentToMathCollection(lrn: String, rating: String?, timestamp: String) {
+        ensureCollectionExists("Math Scores")
+        addStudentToScoreCollection("Math Scores", lrn, rating, timestamp)
     }
 
     // Add a student to a score collection (literacy or numeracy)
@@ -244,8 +244,8 @@ class FirebaseHelper {
 
     // Get students from the ratings collection
     suspend fun getStudentsFromRatingsCollection(): List<StudentRatings> {
-        val numeracyMap = getRatingsMap("Numeracy_Scores")
-        val literacyMap = getRatingsMap("Literacy_Scores")
+        val numeracyMap = getRatingsMap("Math Scores")
+        val literacyMap = getRatingsMap("Filipino Scores")
 
         // Combine the results from both maps
         literacyMap.forEach { (lrn, literacyRating) ->
@@ -286,8 +286,12 @@ class FirebaseHelper {
         }
     }
 
-    private fun getCurrentDate(): String {
+    internal fun getCurrentDate(): String {
         return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+    }
+
+    internal fun getCurrentTimestamp(): String {
+        return SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
     }
 
     private fun formatMiddleName(middlename: String?): String {

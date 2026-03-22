@@ -7,20 +7,20 @@
 
     <fragment
         android:id="@+id/navigation_attendance"
-        android:name="com.example.TLV.ui.AttendanceFragment"
+        android:name="com.example.TLV.ui.AttendanceTableFragment"
         android:label="Attendance"
-        tools:layout="@layout/fragment_attendance" />
+        tools:layout="@layout/fragment_attendance_table" />
 
     <fragment
         android:id="@+id/navigation_measurement"
-        android:name="com.example.TLV.ui.MeasurementFragment"
+        android:name="com.example.TLV.ui.MeasurementTableFragment"
         android:label="Measurement"
-        tools:layout="@layout/fragment_measurement" />
+        tools:layout="@layout/fragment_measurement_table" />
 
     <fragment
         android:id="@+id/navigation_scores"
-        android:name="com.example.TLV.ui.ScoreFragment"
+        android:name="com.example.TLV.ui.ScoreTableFragment"
         android:label="Scores"
-        tools:layout="@layout/fragment_score" />
+        tools:layout="@layout/fragment_score_table" />
 
 </navigation>

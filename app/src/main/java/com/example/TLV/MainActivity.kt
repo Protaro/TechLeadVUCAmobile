@@ -1,186 +1,99 @@
-@file:Suppress("DEPRECATION")
-
 package com.example.TLV
 
-import ConnectivityReceiver
-import android.app.Activity
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.os.Bundle
-import android.util.Log
-import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
-import androidx.lifecycle.lifecycleScope
-import androidx.navigation.NavController
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.setupActionBarWithNavController
-import androidx.navigation.ui.setupWithNavController
+import androidx.fragment.app.Fragment
+import androidx.viewpager2.adapter.FragmentStateAdapter
+import androidx.viewpager2.widget.ViewPager2
 import com.example.TLV.databinding.ActivityMainBinding
-import com.example.TLV.firebase.FirebaseHelper
-import com.example.TLV.ui.AttendanceFragment
-import com.example.TLV.ui.MeasurementFragment
-import com.example.TLV.ui.ScoreFragment
-import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.zxing.integration.android.IntentIntegrator
-import kotlinx.coroutines.launch
+import com.example.TLV.ui.AttendanceTableFragment
+import com.example.TLV.ui.InputBottomSheetFragment
+import com.example.TLV.ui.MeasurementTableFragment
+import com.example.TLV.ui.ScoreTableFragment
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayoutMediator
+import com.google.firebase.auth.FirebaseAuth
 
-class MainActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityListener {
+class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var sharedPreferences: android.content.SharedPreferences
-    private lateinit var connectivityReceiver: ConnectivityReceiver
-    private val firebaseHelper = FirebaseHelper()
-
-
-    companion object {
-        private const val SHARED_PREFS = "shared_prefs"
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        sharedPreferences = getSharedPreferences(SHARED_PREFS, Context.MODE_PRIVATE)
-
-        setupToolbar()
-        setupBottomNavigation()
-        setupLogoutButton()
-        setupConnectivityReceiver()
-        setupQRScanner()
+        setupToolbarAndLogout()
+        setupViewPagerAndTabs()
+        setupFab()
+        // We'll add logout and other features later if needed
     }
 
-    private fun setupToolbar() {
-        val toolbar: Toolbar = binding.toolbar
-        setSupportActionBar(toolbar)
+    private fun setupViewPagerAndTabs() {
+        val viewPager: ViewPager2 = binding.viewPager
+        val tabLayout: TabLayout = binding.tabLayout
 
-        val navHostFragment =
-            supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_dashboard) as NavHostFragment
-        val navController: NavController = navHostFragment.navController
+        // Set up adapter with 3 fragments
+        viewPager.adapter = object : FragmentStateAdapter(this) {
+            override fun getItemCount(): Int = 3
 
-        val appBarConfiguration = AppBarConfiguration(
-            setOf(R.id.navigation_attendance, R.id.navigation_measurement, R.id.navigation_scores)
-        )
-
-        setupActionBarWithNavController(navController, appBarConfiguration)
-
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            toolbar.title = when (destination.id) {
-                R.id.navigation_attendance -> "Attendance"
-                R.id.navigation_measurement -> "Measurement"
-                R.id.navigation_scores -> "Scores"
-                else -> "Default"
+            override fun createFragment(position: Int): Fragment {
+                return when (position) {
+                    0 -> AttendanceTableFragment()
+                    1 -> MeasurementTableFragment()
+                    2 -> ScoreTableFragment()
+                    else -> AttendanceTableFragment() // fallback
+                }
             }
+        }
+
+        // Connect tabs with viewpager
+        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
+            tab.text = when (position) {
+                0 -> "Attendance"
+                1 -> "Measurements"
+                2 -> "Scores"
+                else -> "?"
+            }
+        }.attach()
+
+        // Optional: start on Attendance tab
+        viewPager.setCurrentItem(0, false)
+    }
+
+    private fun setupFab() {
+        binding.fabAdd.setOnClickListener {
+            // We'll create this BottomSheet in Step 4
+            InputBottomSheetFragment().show(supportFragmentManager, "input_bottom_sheet")
         }
     }
 
-    private fun setupBottomNavigation() {
-        val bottomNavigationView: BottomNavigationView = binding.navView
-        val navHostFragment =
-            supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_dashboard) as NavHostFragment
-        val navController: NavController = navHostFragment.navController
+    private fun setupToolbarAndLogout() {
+        val toolbar = binding.toolbar
+        setSupportActionBar(toolbar)
 
-        bottomNavigationView.setupWithNavController(navController)
-    }
-
-    private fun setupLogoutButton() {
         binding.btnLogout.setOnClickListener {
-            Toast.makeText(this, "Logging out...", Toast.LENGTH_SHORT).show()
-            sharedPreferences.edit().apply {
-                putBoolean("isLoggedIn", false)
-                putLong("logTime", 0)
-                apply()
-            }
+            // Clear login state (adjust according to your SharedPreferences / Firebase logic)
+            val prefs = getSharedPreferences("shared_prefs", MODE_PRIVATE)
+            prefs.edit().putBoolean("isLoggedIn", false).apply()
+
+            FirebaseAuth.getInstance().signOut()
+
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
         }
     }
 
-    private fun setupConnectivityReceiver() {
-        connectivityReceiver = ConnectivityReceiver(this)
-        val intentFilter = IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION)
-        registerReceiver(connectivityReceiver, intentFilter)
-    }
-
-    private fun setupQRScanner() {
-        val qrScannerLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val scannedData = result.data?.getStringExtra("SCAN_RESULT")
-                    if (scannedData != null) {
-                        lifecycleScope.launch {
-                            handleScannedData(scannedData)
-                        }
-                    } else {
-                        Log.e("QRScan", "No data received from QR scanner.")
-                    }
-                }
+    fun refreshAllTables() {
+        supportFragmentManager.fragments.forEach { fragment ->
+            when (fragment) {
+                is AttendanceTableFragment -> fragment.refresh()
+                is MeasurementTableFragment -> fragment.refresh()
+                is ScoreTableFragment -> fragment.refresh()
             }
-
-        binding.btnScanner.setOnClickListener {
-            val intentIntegrator = IntentIntegrator(this).apply {
-                setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
-                setPrompt("Scan a QR Code")
-                setBeepEnabled(true)
-                setBarcodeImageEnabled(true)
-            }
-            qrScannerLauncher.launch(intentIntegrator.createScanIntent())
         }
     }
 
-
-    private suspend fun handleScannedData(scannedData: String?) {
-        if (scannedData != null) {
-            Log.d("QRScan", "Scanned Data: $scannedData")
-            val navHostFragment =
-                supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_dashboard) as? NavHostFragment
-            val currentFragment = navHostFragment?.childFragmentManager?.fragments?.firstOrNull {
-                it is AttendanceFragment
-            } as? AttendanceFragment
-
-            currentFragment?.updateScannedData(scannedData) ?: Log.e(
-                "MainActivity",
-                "AttendanceFragment not active or not found"
-            )
-
-            val bundle = Bundle().apply {
-                putString("scannedData", scannedData)
-            }
-            val navController =
-                (supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_dashboard) as NavHostFragment).navController
-            navController.navigate(R.id.navigation_attendance, bundle)
-
-            firebaseHelper.uploadScannedLRNToFirebase(scannedData)
-        } else {
-            Log.e("QRScan", "No data received from QR scanner.")
-        }
-    }
-
-
-    override fun onDestroy() {
-        super.onDestroy()
-        unregisterReceiver(connectivityReceiver)
-    }
-
-    override fun onNetworkConnectionChanged(isConnected: Boolean) {
-        if (!isConnected) {
-            Toast.makeText(
-                this,
-                "No internet connection. Switching to offline mode.",
-                Toast.LENGTH_SHORT
-            ).show()
-            startActivity(Intent(this, OfflineActivity::class.java))
-            finish()
-        }
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        val navController =
-            (supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_dashboard) as NavHostFragment).navController
-        return navController.navigateUp() || super.onSupportNavigateUp()
-    }
+    // We'll add logout, QR result handling, etc. in later steps if needed
 }
