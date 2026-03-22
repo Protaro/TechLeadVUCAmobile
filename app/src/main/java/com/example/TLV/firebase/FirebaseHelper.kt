@@ -1,6 +1,7 @@
 package com.example.TLV.firebase
 
 import android.util.Log
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -8,6 +9,7 @@ import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.collections.iterator
 
 data class Student(
     val name: String = "",
@@ -25,9 +27,9 @@ data class StudentMeasurement(
 
 data class StudentRatings(
     val lrn: String = "",
-    val numeracy: String? = null, // Allow null values
-    val literacy: String? = null,  // Allow null values
-    val timestamp: String? = null    // Allow null values
+    val numeracy: String = "",
+    val literacy: String = "",
+    val timestamp: String = ""
 )
 
 class FirebaseHelper {
@@ -82,7 +84,7 @@ class FirebaseHelper {
     }
 
     // Build full name from document
-    private fun buildFullName(document: com.google.firebase.firestore.DocumentSnapshot): String {
+    private fun buildFullName(document: DocumentSnapshot): String {
         val firstName = document.getString("firstname")
         val middleName = document.getString("middlename")
         val lastName = document.getString("lastname")
@@ -95,19 +97,12 @@ class FirebaseHelper {
         return getStudentByField("lrn", lrn)
     }
 
-    // Get a student by their QR code (assumed to be the same as LRN)
     suspend fun getStudentByQR(qrCode: String): Student? {
         return getStudentByLRN(qrCode)
     }
 
-    // Upload scanned LRN to Firebase
-    suspend fun uploadScannedLRNToFirebase(lrn: String) {
-        val scannedData = hashMapOf("LRN" to lrn)
-        firestore.collection("Scanner").add(scannedData).await()
-    }
-
     // Add a student to the attendance collection
-    suspend fun addStudentToAttendanceCollection(name: String, lrn: String, timestamp: String) {
+    suspend fun addStudentToAttendanceCollection(lrn: String, timestamp: String) {
         val currentDate = getCurrentDate()
         val attendanceData = mapOf(lrn to timestamp)
         firestore.collection("Feeding").document(currentDate)
@@ -151,7 +146,7 @@ class FirebaseHelper {
             .documents.firstOrNull()
 
     // Update existing measurement record
-    private suspend fun updateExistingMeasurement(existingDocument: com.google.firebase.firestore.DocumentSnapshot, height: Float, weight: Float, timestamp: String) {
+    private suspend fun updateExistingMeasurement(existingDocument: DocumentSnapshot, height: Float, weight: Float, timestamp: String) {
         existingDocument.reference.update(
             mapOf(
                 "height" to height,
@@ -175,12 +170,12 @@ class FirebaseHelper {
 
     // Add a student to the literacy collection
     suspend fun addStudentToLiteracyCollection(lrn: String, rating: String?, timestamp: String) {
-        ensureCollectionExists("Literacy_Scores") // Ensure the collection exists
+        ensureCollectionExists("Literacy_Scores")
         addStudentToScoreCollection("Literacy_Scores", lrn, rating, timestamp)
     }
 
     suspend fun addStudentToNumeracyCollection(lrn: String, rating: String?, timestamp: String) {
-        ensureCollectionExists("Numeracy_Scores") // Ensure the collection exists
+        ensureCollectionExists("Numeracy_Scores")
         addStudentToScoreCollection("Numeracy_Scores", lrn, rating, timestamp)
     }
 
