@@ -14,7 +14,6 @@ class ScoreAdapter : ListAdapter<StudentRatings, ScoreAdapter.ViewHolder>(DiffCa
         fun bind(item: StudentRatings) {
             binding.tvName.text = "Student (LRN: ${item.lrn})"  // name not stored here - adjust if you fetch it
             binding.tvLrn.text = "LRN: ${item.lrn}"
-            binding.tvTimestamp.text = item.timestamp
             binding.tvLiteracy.text = "${item.literacy} / 10"
             binding.tvNumeracy.text = "${item.numeracy} / 10"
         }

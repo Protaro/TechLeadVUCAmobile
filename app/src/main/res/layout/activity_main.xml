@@ -56,25 +56,29 @@
             app:tabGravity="fill"
             app:tabTextColor="@color/my_primary"
             app:tabSelectedTextColor="@color/my_primary"
-            app:tabIndicatorColor="@color/my_primary" />
+            app:tabIndicatorColor="@color/my_primary"/>
     </com.google.android.material.appbar.AppBarLayout>
 
     <!-- The three tables (will be RecyclerViews) -->
+
+    <!-- Floating Action Button to open Input -->
+
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/view_pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-    <!-- Floating Action Button to open Input -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_add"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:src="@android:drawable/ic_input_add"
+        android:layout_margin="24dp"
+        android:src="@drawable/add_person"
+        app:backgroundTint="@color/my_primary"
+        app:tint="@android:color/white"
         app:layout_anchor="@id/view_pager"
         app:layout_anchorGravity="bottom|end"
-        app:backgroundTint="@color/my_primary" />
+        app:fabSize="normal" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

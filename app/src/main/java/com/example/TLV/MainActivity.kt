@@ -27,7 +27,6 @@ class MainActivity : AppCompatActivity() {
         setupToolbarAndLogout()
         setupViewPagerAndTabs()
         setupFab()
-        // We'll add logout and other features later if needed
     }
 
     private fun setupViewPagerAndTabs() {
@@ -52,7 +51,7 @@ class MainActivity : AppCompatActivity() {
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             tab.text = when (position) {
                 0 -> "Attendance"
-                1 -> "Measurements"
+                1 -> "Measure"
                 2 -> "Scores"
                 else -> "?"
             }
@@ -64,7 +63,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupFab() {
         binding.fabAdd.setOnClickListener {
-            // We'll create this BottomSheet in Step 4
             InputBottomSheetFragment().show(supportFragmentManager, "input_bottom_sheet")
         }
     }
@@ -74,7 +72,6 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
         binding.btnLogout.setOnClickListener {
-            // Clear login state (adjust according to your SharedPreferences / Firebase logic)
             val prefs = getSharedPreferences("shared_prefs", MODE_PRIVATE)
             prefs.edit().putBoolean("isLoggedIn", false).apply()
 
@@ -95,5 +92,4 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // We'll add logout, QR result handling, etc. in later steps if needed
 }

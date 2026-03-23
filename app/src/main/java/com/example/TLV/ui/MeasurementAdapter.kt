@@ -14,7 +14,6 @@ class MeasurementAdapter : ListAdapter<StudentMeasurement, MeasurementAdapter.Vi
         fun bind(item: StudentMeasurement) {
             binding.tvName.text = item.name
             binding.tvLrn.text = "LRN: ${item.lrn}"
-            binding.tvTimestamp.text = item.timestamp
             binding.tvHeight.text = "${item.height} cm"
             binding.tvWeight.text = "${item.weight} kg"
         }
