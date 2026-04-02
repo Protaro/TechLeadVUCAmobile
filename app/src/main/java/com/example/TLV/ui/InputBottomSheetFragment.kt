@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -194,8 +193,8 @@ class InputBottomSheetFragment : BottomSheetDialogFragment() {
                 val literacy = binding.sliderLiteracy.value.toInt().toString()
                 val numeracy = binding.sliderNumeracy.value.toInt().toString()
 
-                firebaseHelper.addStudentToFilipinoCollection(student.lrn, literacy, timestamp)
-                firebaseHelper.addStudentToMathCollection(student.lrn, numeracy, timestamp)
+                firebaseHelper.addStudentToFilipinoCollection(student.name, student.lrn, literacy, timestamp)
+                firebaseHelper.addStudentToMathCollection(student.name, student.lrn, numeracy, timestamp)
             }
 
             if (success) {

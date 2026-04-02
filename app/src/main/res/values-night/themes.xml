@@ -1,6 +1,6 @@
 <resources>
     <!-- Base application theme. -->
-    <style name="Base.Theme.SharedPreferences" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Base.Theme.TLV" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
         <item name="colorPrimary">@color/my_primary</item>
@@ -14,5 +14,5 @@
         <item name="android:statusBarColor">@color/my_primary</item>
     </style>
 
-    <style name="Theme.SharedPreferences" parent="Base.Theme.SharedPreferences" />
+    <style name="Theme.TLV" parent="Base.Theme.TLV" />
 </resources>

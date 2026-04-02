@@ -12,7 +12,7 @@ class ScoreAdapter : ListAdapter<StudentRatings, ScoreAdapter.ViewHolder>(DiffCa
 
     class ViewHolder(private val binding: ItemScoreBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: StudentRatings) {
-            binding.tvName.text = "Student (LRN: ${item.lrn})"  // name not stored here - adjust if you fetch it
+            binding.tvName.text = item.name
             binding.tvLrn.text = "LRN: ${item.lrn}"
             binding.tvLiteracy.text = "${item.literacy} / 10"
             binding.tvNumeracy.text = "${item.numeracy} / 10"
