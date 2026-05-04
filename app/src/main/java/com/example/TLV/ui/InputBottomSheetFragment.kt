@@ -15,7 +15,6 @@ import com.example.TLV.ScannerActivity
 import com.example.TLV.databinding.FragmentInputBottomSheetBinding
 import com.example.TLV.firebase.FirebaseHelper
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -25,7 +24,8 @@ class InputBottomSheetFragment : BottomSheetDialogFragment() {
     private var _binding: FragmentInputBottomSheetBinding? = null
     private val binding get() = _binding!!
 
-    private val firebaseHelper = FirebaseHelper()
+    // Pass requireContext() so FirebaseHelper can persist students to SharedPreferences
+    private val firebaseHelper by lazy { FirebaseHelper(requireContext()) }
 
     private lateinit var nameAdapter: ArrayAdapter<String>
     private lateinit var lrnAdapter: ArrayAdapter<String>
@@ -48,18 +48,13 @@ class InputBottomSheetFragment : BottomSheetDialogFragment() {
     }
 
     private fun setupAutoComplete() {
-        nameAdapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_dropdown_item_1line
-        )
-        lrnAdapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_dropdown_item_1line
-        )
+        nameAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line)
+        lrnAdapter  = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line)
 
         binding.edName.setAdapter(nameAdapter)
         binding.edLrn.setAdapter(lrnAdapter)
 
+        // Load from Firestore cache or SharedPreferences — works offline
         lifecycleScope.launch {
             nameAdapter.addAll(firebaseHelper.getAllValidNames())
             lrnAdapter.addAll(firebaseHelper.getAllValidLRNs())
@@ -120,11 +115,7 @@ class InputBottomSheetFragment : BottomSheetDialogFragment() {
                         if (student != null) {
                             binding.edName.setText(student.name)
                         } else {
-                            Toast.makeText(
-                                context,
-                                "Student not found for this LRN",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            Toast.makeText(context, "Student not found for this LRN", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
@@ -132,22 +123,17 @@ class InputBottomSheetFragment : BottomSheetDialogFragment() {
         }
 
         binding.btnScanQr.setOnClickListener {
-            val intent = Intent(requireContext(), ScannerActivity::class.java)
-            scannerLauncher.launch(intent)
+            scannerLauncher.launch(Intent(requireContext(), ScannerActivity::class.java))
         }
 
-        binding.btnSubmit.setOnClickListener {
-            submitData()
-        }
+        binding.btnSubmit.setOnClickListener { submitData() }
 
-        binding.btnCancel.setOnClickListener {
-            dismiss()
-        }
+        binding.btnCancel.setOnClickListener { dismiss() }
     }
 
     private fun submitData() {
         val name = binding.edName.text.toString().trim()
-        val lrn = binding.edLrn.text.toString().trim()
+        val lrn  = binding.edLrn.text.toString().trim()
 
         if (name.isEmpty() && lrn.isEmpty()) {
             Toast.makeText(context, "Please enter name or LRN", Toast.LENGTH_SHORT).show()
@@ -165,32 +151,26 @@ class InputBottomSheetFragment : BottomSheetDialogFragment() {
 
             val timestamp = firebaseHelper.getCurrentTimestamp()
 
-            // === CAPTURE ALL INPUT VALUES BEFORE DISMISS ===
-            val attendanceChecked = binding.cbLogAttendance.isChecked
-            val measurementVisible = binding.layoutMeasurementFields.visibility == View.VISIBLE
-            val heightStr = binding.edHeight.text.toString().trim()
-            val weightStr = binding.edWeight.text.toString().trim()
-            val scoreVisible = binding.layoutScoreFields.visibility == View.VISIBLE
-            val literacy = binding.sliderLiteracy.value.toInt()
-            val numeracy = binding.sliderNumeracy.value.toInt()
+            // Capture all UI values before dismiss()
+            val attendanceChecked   = binding.cbLogAttendance.isChecked
+            val measurementVisible  = binding.layoutMeasurementFields.visibility == View.VISIBLE
+            val heightStr           = binding.edHeight.text.toString().trim()
+            val weightStr           = binding.edWeight.text.toString().trim()
+            val scoreVisible        = binding.layoutScoreFields.visibility == View.VISIBLE
+            val literacy            = binding.sliderLiteracy.value.toInt()
+            val numeracy            = binding.sliderNumeracy.value.toInt()
 
-            // Show success + close immediately (great UX)
-            Toast.makeText(
-                context,
-                "Data logged successfully (saved offline)",
-                Toast.LENGTH_SHORT
-            ).show()
+            // Give instant feedback — writes are fire-and-forget so this is safe
+            Toast.makeText(context, "Data logged successfully", Toast.LENGTH_SHORT).show()
             dismiss()
 
-            // All writes run in a background scope that CANNOT be cancelled by dismiss()
+            // All writes run in a scope tied to the Activity so they survive dismiss()
             requireActivity().lifecycleScope.launch(Dispatchers.IO) {
                 try {
-                    // Attendance
                     if (attendanceChecked) {
                         firebaseHelper.addStudentToAttendanceCollection(student.lrn, timestamp)
                     }
 
-                    // Measurement
                     if (measurementVisible) {
                         val height = heightStr.toFloatOrNull()
                         val weight = weightStr.toFloatOrNull()
@@ -200,29 +180,29 @@ class InputBottomSheetFragment : BottomSheetDialogFragment() {
                             )
                         } else {
                             withContext(Dispatchers.Main) {
-                                Toast.makeText(context, "Invalid height/weight values", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    requireActivity(),
+                                    "Invalid height/weight values",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         }
                     }
 
-                    // Scores
                     if (scoreVisible) {
-                        val litStr = literacy.toString()
-                        val numStr = numeracy.toString()
-                        firebaseHelper.addStudentToFilipinoCollection(student.name, student.lrn, litStr, timestamp)
-                        firebaseHelper.addStudentToMathCollection(student.name, student.lrn, numStr, timestamp)
+                        firebaseHelper.addStudentToFilipinoCollection(
+                            student.name, student.lrn, literacy.toString(), timestamp
+                        )
+                        firebaseHelper.addStudentToMathCollection(
+                            student.name, student.lrn, numeracy.toString(), timestamp
+                        )
                     }
 
-                    // Refresh tables AFTER writes have finished (data is now in local cache)
-                    withContext(Dispatchers.Main) {
-                        refreshTables()
-                    }
+                    withContext(Dispatchers.Main) { refreshTables() }
 
                 } catch (e: Exception) {
-                    Log.e("InputBottomSheet", "Error during offline write (Firestore will retry)", e)
-                    withContext(Dispatchers.Main) {
-                        refreshTables()
-                    }
+                    Log.e("InputBottomSheet", "Write error (Firestore will retry offline)", e)
+                    withContext(Dispatchers.Main) { refreshTables() }
                 }
             }
         }

@@ -50,15 +50,13 @@ class AttendanceTableFragment : Fragment() {
         listenerRegistration = firebaseHelper.listenToAttendance(today) { list ->
             if (_binding == null) return@listenToAttendance
             adapter.submitList(list)
-            binding.tvEmpty.visibility    = if (list.isEmpty()) View.VISIBLE else View.GONE
-            binding.recyclerView.visibility = if (list.isEmpty()) View.GONE  else View.VISIBLE
+            binding.tvEmpty.visibility      = if (list.isEmpty()) View.VISIBLE else View.GONE
+            binding.recyclerView.visibility = if (list.isEmpty()) View.GONE   else View.VISIBLE
         }
     }
 
     override fun onResume() {
         super.onResume()
-
-        startListening()
     }
 
     override fun onDestroyView() {

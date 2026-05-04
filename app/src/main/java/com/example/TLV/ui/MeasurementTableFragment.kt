@@ -9,10 +9,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.TLV.databinding.FragmentMeasurementTableBinding
 import com.example.TLV.firebase.FirebaseHelper
 import com.google.firebase.firestore.ListenerRegistration
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class MeasurementTableFragment : Fragment() {
 
@@ -53,20 +49,14 @@ class MeasurementTableFragment : Fragment() {
 
         listenerRegistration = firebaseHelper.listenToMeasurements(today) { list ->
             if (_binding == null) return@listenToMeasurements
-
             adapter.submitList(list)
-
-            binding.tvEmpty.visibility =
-                if (list.isEmpty()) View.VISIBLE else View.GONE
-            binding.recyclerView.visibility =
-                if (list.isEmpty()) View.GONE else View.VISIBLE
+            binding.tvEmpty.visibility      = if (list.isEmpty()) View.VISIBLE else View.GONE
+            binding.recyclerView.visibility = if (list.isEmpty()) View.GONE   else View.VISIBLE
         }
     }
 
-
     override fun onResume() {
         super.onResume()
-        startListening()
     }
 
     override fun onDestroyView() {

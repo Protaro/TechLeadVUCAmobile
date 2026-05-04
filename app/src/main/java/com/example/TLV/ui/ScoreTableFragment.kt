@@ -9,10 +9,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.TLV.databinding.FragmentScoreTableBinding
 import com.example.TLV.firebase.FirebaseHelper
 import com.google.firebase.firestore.ListenerRegistration
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class ScoreTableFragment : Fragment() {
 
@@ -23,6 +19,7 @@ class ScoreTableFragment : Fragment() {
     private lateinit var adapter: ScoreAdapter
 
     private var listeners: List<ListenerRegistration> = emptyList()
+    private var isListening = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -47,7 +44,9 @@ class ScoreTableFragment : Fragment() {
     }
 
     private fun startListening() {
+        // Tear down existing listeners before re-attaching
         listeners.forEach { it.remove() }
+        isListening = false
 
         val today = firebaseHelper.getCurrentDate()
 
@@ -61,18 +60,19 @@ class ScoreTableFragment : Fragment() {
             binding.recyclerView.visibility =
                 if (list.isEmpty()) View.GONE else View.VISIBLE
         }
+
+        isListening = true
     }
 
     override fun onResume() {
         super.onResume()
-        startListening()   // force reload when tab becomes visible
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         listeners.forEach { it.remove() }
         listeners = emptyList()
+        isListening = false
         _binding = null
-
     }
 }
