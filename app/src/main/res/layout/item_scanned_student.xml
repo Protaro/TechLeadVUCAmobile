@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="6dp"
+    app:cardCornerRadius="8dp"
+    app:cardBackgroundColor="#CC1A1A2E"
+    app:cardElevation="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="10dp"
+        android:gravity="center_vertical">
+
+        <!-- Status icon -->
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:gravity="center"
+            android:textSize="16sp"
+            android:text="✓"
+            android:textColor="#4CAF50" />
+
+        <!-- Name + time -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="8dp">
+
+            <TextView
+                android:id="@+id/tvName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                tools:text="Juan D. Dela Cruz"
+                xmlns:tools="http://schemas.android.com/tools"/>
+
+            <TextView
+                android:id="@+id/tvTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#AAAAAA"
+                android:textSize="11sp"
+                tools:text="09:32:15"
+                xmlns:tools="http://schemas.android.com/tools"/>
+
+        </LinearLayout>
+
+        <!-- Duplicate badge (shown only when already scanned) -->
+        <TextView
+            android:id="@+id/tvDuplicate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Already logged"
+            android:textSize="10sp"
+            android:textColor="#FF9800"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>
