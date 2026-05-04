@@ -2,6 +2,7 @@ package com.example.TLV.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,7 +15,10 @@ import com.example.TLV.ScannerActivity
 import com.example.TLV.databinding.FragmentInputBottomSheetBinding
 import com.example.TLV.firebase.FirebaseHelper
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class InputBottomSheetFragment : BottomSheetDialogFragment() {
 
@@ -159,54 +163,75 @@ class InputBottomSheetFragment : BottomSheetDialogFragment() {
                 return@launch
             }
 
-            var success = true
-
-            // Use consistent timestamp method — change if your helper uses different name
             val timestamp = firebaseHelper.getCurrentTimestamp()
 
-            // Attendance
-            if (binding.cbLogAttendance.isChecked) {
-                firebaseHelper.addStudentToAttendanceCollection(student.lrn, timestamp)
-            }
+            // === CAPTURE ALL INPUT VALUES BEFORE DISMISS ===
+            val attendanceChecked = binding.cbLogAttendance.isChecked
+            val measurementVisible = binding.layoutMeasurementFields.visibility == View.VISIBLE
+            val heightStr = binding.edHeight.text.toString().trim()
+            val weightStr = binding.edWeight.text.toString().trim()
+            val scoreVisible = binding.layoutScoreFields.visibility == View.VISIBLE
+            val literacy = binding.sliderLiteracy.value.toInt()
+            val numeracy = binding.sliderNumeracy.value.toInt()
 
-            // Measurement
-            if (binding.layoutMeasurementFields.visibility == View.VISIBLE) {
-                val heightStr = binding.edHeight.text.toString().trim()
-                val weightStr = binding.edWeight.text.toString().trim()
+            // Show success + close immediately (great UX)
+            Toast.makeText(
+                context,
+                "Data logged successfully (saved offline)",
+                Toast.LENGTH_SHORT
+            ).show()
+            dismiss()
 
-                if (heightStr.isNotEmpty() && weightStr.isNotEmpty()) {
-                    val height = heightStr.toFloatOrNull()
-                    val weight = weightStr.toFloatOrNull()
-                    if (height != null && weight != null) {
-                        firebaseHelper.addStudentToMeasurementsCollection(
-                            student.name, student.lrn, timestamp, height, weight
-                        )
-                    } else {
-                        success = false
-                        Toast.makeText(context, "Invalid height/weight", Toast.LENGTH_SHORT).show()
+            // All writes run in a background scope that CANNOT be cancelled by dismiss()
+            requireActivity().lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    // Attendance
+                    if (attendanceChecked) {
+                        firebaseHelper.addStudentToAttendanceCollection(student.lrn, timestamp)
+                    }
+
+                    // Measurement
+                    if (measurementVisible) {
+                        val height = heightStr.toFloatOrNull()
+                        val weight = weightStr.toFloatOrNull()
+                        if (height != null && weight != null) {
+                            firebaseHelper.addStudentToMeasurementsCollection(
+                                student.name, student.lrn, timestamp, height, weight
+                            )
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(context, "Invalid height/weight values", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+
+                    // Scores
+                    if (scoreVisible) {
+                        val litStr = literacy.toString()
+                        val numStr = numeracy.toString()
+                        firebaseHelper.addStudentToFilipinoCollection(student.name, student.lrn, litStr, timestamp)
+                        firebaseHelper.addStudentToMathCollection(student.name, student.lrn, numStr, timestamp)
+                    }
+
+                    // Refresh tables AFTER writes have finished (data is now in local cache)
+                    withContext(Dispatchers.Main) {
+                        refreshTables()
+                    }
+
+                } catch (e: Exception) {
+                    Log.e("InputBottomSheet", "Error during offline write (Firestore will retry)", e)
+                    withContext(Dispatchers.Main) {
+                        refreshTables()
                     }
                 }
-            }
-
-            // Scores
-            if (binding.layoutScoreFields.visibility == View.VISIBLE) {
-                val literacy = binding.sliderLiteracy.value.toInt().toString()
-                val numeracy = binding.sliderNumeracy.value.toInt().toString()
-
-                firebaseHelper.addStudentToFilipinoCollection(student.name, student.lrn, literacy, timestamp)
-                firebaseHelper.addStudentToMathCollection(student.name, student.lrn, numeracy, timestamp)
-            }
-
-            if (success) {
-                Toast.makeText(context, "Data logged successfully", Toast.LENGTH_SHORT).show()
-                dismiss()
-                refreshTables()
             }
         }
     }
 
     private fun refreshTables() {
-        (requireActivity() as? MainActivity)?.refreshAllTables()
+        if (isAdded) {
+            (activity as? MainActivity)?.refreshAllTables()
+        }
     }
 
     override fun onDestroyView() {

@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.TLV.databinding.FragmentMeasurementTableBinding
 import com.example.TLV.firebase.FirebaseHelper
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -20,6 +21,8 @@ class MeasurementTableFragment : Fragment() {
 
     private val firebaseHelper = FirebaseHelper()
     private lateinit var adapter: MeasurementAdapter
+
+    private var listenerRegistration: ListenerRegistration? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -36,35 +39,40 @@ class MeasurementTableFragment : Fragment() {
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
         binding.recyclerView.adapter = adapter
 
-        loadData()
+        startListening()
     }
 
     fun refresh() {
-        loadData()
+        startListening()
     }
 
-    private fun loadData() {
-        CoroutineScope(Dispatchers.Main).launch {
-            val today = firebaseHelper.getCurrentDate()
-            val list = withContext(Dispatchers.IO) {
-                firebaseHelper.getStudentsFromMeasurementsCollection()
-                    .filter { it.timestamp.startsWith(today) }
-            }
+    private fun startListening() {
+        listenerRegistration?.remove()
+
+        val today = firebaseHelper.getCurrentDate()
+
+        listenerRegistration = firebaseHelper.listenToMeasurements(today) { list ->
+            if (_binding == null) return@listenToMeasurements
 
             adapter.submitList(list)
 
-            binding.tvEmpty.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
-            binding.recyclerView.visibility = if (list.isEmpty()) View.GONE else View.VISIBLE
+            binding.tvEmpty.visibility =
+                if (list.isEmpty()) View.VISIBLE else View.GONE
+            binding.recyclerView.visibility =
+                if (list.isEmpty()) View.GONE else View.VISIBLE
         }
     }
 
+
     override fun onResume() {
         super.onResume()
-        loadData()   // force reload when tab becomes visible
+        startListening()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        listenerRegistration?.remove()
+        listenerRegistration = null
         _binding = null
     }
 }

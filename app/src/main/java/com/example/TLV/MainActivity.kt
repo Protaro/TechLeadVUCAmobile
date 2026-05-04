@@ -4,9 +4,11 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.example.TLV.databinding.ActivityMainBinding
+import com.example.TLV.firebase.FirebaseHelper
 import com.example.TLV.ui.AttendanceTableFragment
 import com.example.TLV.ui.InputBottomSheetFragment
 import com.example.TLV.ui.MeasurementTableFragment
@@ -14,6 +16,7 @@ import com.example.TLV.ui.ScoreTableFragment
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -23,6 +26,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        lifecycleScope.launch {
+            FirebaseHelper().ensureDailyDocumentsExist()
+        }
 
         setupToolbarAndLogout()
         setupViewPagerAndTabs()
@@ -57,7 +64,6 @@ class MainActivity : AppCompatActivity() {
             }
         }.attach()
 
-        // Optional: start on Attendance tab
         viewPager.setCurrentItem(0, false)
     }
 
@@ -91,5 +97,4 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
 }

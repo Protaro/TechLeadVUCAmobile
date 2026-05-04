@@ -1,14 +1,13 @@
 package com.example.TLV.firebase
 
 import android.util.Log
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.*
+import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
+
+// ====================== DATA CLASSES ======================
 
 data class Student(
     val name: String = "",
@@ -32,98 +31,212 @@ data class StudentRatings(
     val timestamp: String = ""
 )
 
+// ====================== FIREBASE HELPER ======================
+
 class FirebaseHelper {
 
     private val firestore = FirebaseFirestore.getInstance()
 
-    // ====================== HELPER FUNCTIONS ======================
+    private var studentCache: List<DocumentSnapshot>? = null
+    private var filipinoCache: DocumentSnapshot? = null
+    private var mathCache: DocumentSnapshot? = null
+    private var measurementsCache: DocumentSnapshot? = null
 
-    internal fun getCurrentDate(): String {
-        return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+    // ====================== CACHE ======================
+
+    private suspend fun ensureStudentCacheLoaded() {
+        if (studentCache != null) return
+        studentCache = firestore.collection("Students")
+            .get(Source.CACHE)
+            .await()
+            .documents
     }
 
-    internal fun getCurrentTimestamp(): String {
-        return SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+    private suspend fun ensureFilipinoCacheLoaded() {
+        if (filipinoCache != null) return
+
+        val date = getCurrentDate()
+        val docRef = firestore.collection("Filipino Scores").document(date)
+
+        filipinoCache = try {
+            docRef.get(Source.CACHE).await()
+        } catch (e: Exception) {
+            docRef.get().await()
+        }
     }
+
+    private suspend fun ensureMathCacheLoaded() {
+        if (mathCache != null) return
+
+        val date = getCurrentDate()
+        val docRef = firestore.collection("Math Scores").document(date)
+
+        mathCache = try {
+            docRef.get(Source.CACHE).await()
+        } catch (e: Exception) {
+            docRef.get().await()
+        }
+    }
+
+    private suspend fun ensureMeasurementsCacheLoaded() {
+        if (measurementsCache != null) return
+
+        val date = getCurrentDate()
+        val docRef = firestore.collection("Measurements").document(date)
+
+        measurementsCache = try {
+            docRef.get(Source.CACHE).await()
+        } catch (e: Exception) {
+            docRef.get().await()
+        }
+    }
+
+    suspend fun getCachedFilipinoScores(): List<StudentRatings> {
+        ensureFilipinoCacheLoaded()
+
+        return filipinoCache?.data?.mapNotNull { (lrn, value) ->
+            val map = value as? Map<*, *> ?: return@mapNotNull null
+
+            StudentRatings(
+                name = map["name"] as? String ?: "",
+                lrn = lrn,
+                literacy = map["literacy"] as? String ?: "",
+                numeracy = "",
+                timestamp = map["timestamp"] as? String ?: ""
+            )
+        } ?: emptyList()
+    }
+
+    suspend fun getCachedMathScores(): List<StudentRatings> {
+        ensureMathCacheLoaded()
+
+        return mathCache?.data?.mapNotNull { (lrn, value) ->
+            val map = value as? Map<*, *> ?: return@mapNotNull null
+
+            StudentRatings(
+                name = map["name"] as? String ?: "",
+                lrn = lrn,
+                literacy = "",
+                numeracy = map["numeracy"] as? String ?: "",
+                timestamp = map["timestamp"] as? String ?: ""
+            )
+        } ?: emptyList()
+    }
+
+    suspend fun getCachedMeasurements(): List<StudentMeasurement> {
+        ensureMeasurementsCacheLoaded()
+
+        return measurementsCache?.data?.mapNotNull { (lrn, value) ->
+            val map = value as? Map<*, *> ?: return@mapNotNull null
+
+            StudentMeasurement(
+                name = map["name"] as? String ?: "",
+                lrn = lrn,
+                height = (map["height"] as? Number)?.toFloat(),
+                weight = (map["weight"] as? Number)?.toFloat(),
+                timestamp = map["timestamp"] as? String ?: ""
+            )
+        } ?: emptyList()
+    }
+
+    // ====================== DATE/TIME ======================
+
+    fun getCurrentDate(): String =
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+
+    fun getCurrentTimestamp(): String =
+        SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+
+    // ====================== NAME ======================
 
     private fun formatMiddleName(middlename: String?): String {
         return middlename?.split(" ")
-            ?.joinToString("") { it.firstOrNull()?.toString()?.uppercase() ?: "" } + "."
+            ?.joinToString("") { it.firstOrNull()?.uppercase() ?: "" } + "."
     }
 
-    private fun buildFullName(document: DocumentSnapshot): String {
-        val firstName = document.getString("firstname") ?: ""
-        val middleName = document.getString("middlename")
-        val lastName = document.getString("lastname") ?: ""
-        val middleInitial = formatMiddleName(middleName)
-        return "$firstName $middleInitial $lastName".trim()
+    private fun buildFullName(doc: DocumentSnapshot): String {
+        val first = doc.getString("firstname") ?: ""
+        val middle = formatMiddleName(doc.getString("middlename"))
+        val last = doc.getString("lastname") ?: ""
+        return "$first $middle $last".trim()
     }
 
-    // ====================== READ OPERATIONS ======================
+    // ====================== LOOKUP ======================
 
     suspend fun getAllValidNames(): List<String> {
-        val snapshot = firestore.collection("Students").get().await()
-        return snapshot.documents.mapNotNull { doc ->
-            val firstName = doc.getString("firstname")
-            val lastName = doc.getString("lastname")
-            if (!firstName.isNullOrEmpty() && !lastName.isNullOrEmpty()) {
-                val middleInitial = formatMiddleName(doc.getString("middlename"))
-                "$firstName $middleInitial $lastName".trim()
+        ensureStudentCacheLoaded()
+        return studentCache!!.mapNotNull { doc ->
+            val first = doc.getString("firstname")
+            val last = doc.getString("lastname")
+            if (!first.isNullOrEmpty() && !last.isNullOrEmpty()) {
+                "${first} ${formatMiddleName(doc.getString("middlename"))} $last".trim()
             } else null
         }
     }
 
     suspend fun getAllValidLRNs(): List<String> {
-        val snapshot = firestore.collection("Students").get().await()
-        return snapshot.documents.mapNotNull { it.getString("lrn") }
+        ensureStudentCacheLoaded()
+        return studentCache!!.mapNotNull { it.getString("lrn") }
     }
 
-    suspend fun getStudentByName(fullName: String): Student? {
-        val snapshot = firestore.collection("Students").get().await()
-        return snapshot.documents.firstOrNull { buildFullName(it) == fullName }?.let { doc ->
-            Student(
-                name = buildFullName(doc),
-                lrn = doc.getString("lrn") ?: ""
-            )
+    suspend fun getStudentByName(name: String): Student? {
+        ensureStudentCacheLoaded()
+        return studentCache!!.firstOrNull { buildFullName(it) == name }?.let {
+            Student(buildFullName(it), it.getString("lrn") ?: "")
         }
     }
 
     suspend fun getStudentByLRN(lrn: String): Student? {
-        val snapshot = firestore.collection("Students")
-            .whereEqualTo("lrn", lrn)
-            .get().await()
-        return snapshot.documents.firstOrNull()?.let { doc ->
-            Student(
-                name = buildFullName(doc),
-                lrn = doc.getString("lrn") ?: ""
-            )
+        ensureStudentCacheLoaded()
+        return studentCache!!.firstOrNull { it.getString("lrn") == lrn }?.let {
+            Student(buildFullName(it), lrn)
         }
     }
 
-    // ====================== WRITE OPERATIONS ======================
+    // ====================== ATTENDANCE ======================
 
-    // Attendance (Feeding collection)
     suspend fun addStudentToAttendanceCollection(lrn: String, timestamp: String) {
-        val currentDate = getCurrentDate()
-        val attendanceData = mapOf(lrn to timestamp)
+        val date = getCurrentDate()
 
-        firestore.collection("Feeding").document(currentDate)
-            .set(attendanceData, SetOptions.merge()).await()
-
-        incrementFeedingAttendance(lrn)
+        firestore.collection("Feeding")
+            .document(date)
+            .set(mapOf(lrn to timestamp), SetOptions.merge())
+            .await()
     }
 
-    private suspend fun incrementFeedingAttendance(lrn: String) {
-        val studentRef = firestore.collection("Students")
-            .whereEqualTo("lrn", lrn)
-            .get().await()
+    fun listenToAttendance(
+        date: String,
+        onUpdate: (List<Student>) -> Unit
+    ): ListenerRegistration {
 
-        studentRef.documents.firstOrNull()?.reference
-            ?.update("feedingattendance", FieldValue.increment(1))
-            ?.await()
+        return firestore.collection("Feeding")
+            .document(date)
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot == null || !snapshot.exists()) {
+                    onUpdate(emptyList())
+                    return@addSnapshotListener
+                }
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    val list = mutableListOf<Student>()
+
+                    snapshot.data?.forEach { (lrn, timestamp) ->
+                        if (timestamp is String) {
+                            getStudentByLRN(lrn)?.let {
+                                list.add(it.copy(timestamp = timestamp))
+                            }
+                        }
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        onUpdate(list)
+                    }
+                }
+            }
     }
 
-    // Measurements - Document ID = "yyyy-MM-dd - LRN"
+    // ====================== MEASUREMENTS ======================
+
     suspend fun addStudentToMeasurementsCollection(
         name: String,
         lrn: String,
@@ -131,121 +244,232 @@ class FirebaseHelper {
         height: Float,
         weight: Float
     ) {
-        val currentDate = getCurrentDate()
-        val documentId = "$currentDate - $lrn"
+        val date = getCurrentDate()
 
-        val data = hashMapOf(
-            "name" to name,
-            "lrn" to lrn,
-            "height" to height,
-            "weight" to weight,
-            "timestamp" to timestamp
+        val data = mapOf(
+            lrn to mapOf(
+                "name" to name,
+                "height" to height,
+                "weight" to weight,
+                "timestamp" to timestamp
+            )
         )
 
         firestore.collection("Measurements")
-            .document(documentId)
+            .document(date)
             .set(data, SetOptions.merge())
             .await()
     }
 
-    // Filipino Scores (formerly Literacy)
-    suspend fun addStudentToFilipinoCollection(name: String, lrn: String, rating: String, timestamp: String) {
-        val currentDate = getCurrentDate()
-        val documentId = "$currentDate - $lrn"
+    fun listenToMeasurements(
+        date: String,
+        onUpdate: (List<StudentMeasurement>) -> Unit
+    ): ListenerRegistration {
 
-        val data = hashMapOf(
-            "name" to name,           // will be filled if needed later
-            "lrn" to lrn,
-            "literacy" to rating,
-            "timestamp" to timestamp
-        )
+        val docRef = firestore.collection("Measurements").document(date)
 
-        firestore.collection("Filipino Scores")
-            .document(documentId)
-            .set(data, SetOptions.merge())
-            .await()
-    }
+        docRef.get(Source.CACHE)
 
-    // Math Scores
-    suspend fun addStudentToMathCollection(name: String, lrn: String, rating: String, timestamp: String) {
-        val currentDate = getCurrentDate()
-        val documentId = "$currentDate - $lrn"
+        return docRef.addSnapshotListener { snapshot, _ ->
+            CoroutineScope(Dispatchers.IO).launch {
 
-        val data = hashMapOf(
-            "name" to name,
-            "lrn" to lrn,
-            "numeracy" to rating,
-            "timestamp" to timestamp
-        )
+                val list = mutableListOf<StudentMeasurement>()
+                val sourceData = snapshot?.data ?: measurementsCache?.data
 
-        firestore.collection("Math Scores")
-            .document(documentId)
-            .set(data, SetOptions.merge())
-            .await()
-    }
+                sourceData?.forEach { (lrn, value) ->
+                    val map = value as? Map<*, *> ?: return@forEach
 
-    // ====================== READ FOR TABLES ======================
+                    list.add(
+                        StudentMeasurement(
+                            name = map["name"] as? String ?: "",
+                            lrn = lrn,
+                            height = (map["height"] as? Number)?.toFloat(),
+                            weight = (map["weight"] as? Number)?.toFloat(),
+                            timestamp = map["timestamp"] as? String ?: ""
+                        )
+                    )
+                }
 
-    suspend fun getStudentsFromAttendanceCollection(date: String): List<Student> {
-        val doc = firestore.collection("Feeding").document(date).get().await()
-        val students = mutableListOf<Student>()
+                if (snapshot != null && snapshot.exists()) {
+                    measurementsCache = snapshot
+                }
 
-        if (doc.exists()) {
-            for ((lrn, timestamp) in doc.data ?: emptyMap<String, Any>()) {
-                if (timestamp is String) {
-                    getStudentByLRN(lrn)?.let {
-                        students.add(it.copy(timestamp = timestamp))
-                    }
+                withContext(Dispatchers.Main) {
+                    onUpdate(list)
                 }
             }
         }
-        return students
     }
 
-    suspend fun getStudentsFromMeasurementsCollection(): List<StudentMeasurement> {
-        val snapshot = firestore.collection("Measurements").get().await()
-        return snapshot.documents.mapNotNull { doc ->
-            StudentMeasurement(
-                name = doc.getString("name") ?: "",
-                lrn = doc.getString("lrn") ?: "",
-                height = doc.getDouble("height")?.toFloat(),
-                weight = doc.getDouble("weight")?.toFloat(),
-                timestamp = doc.getString("timestamp") ?: ""
+    // ====================== FILIPINO ======================
+
+    suspend fun addStudentToFilipinoCollection(
+        name: String,
+        lrn: String,
+        rating: String,
+        timestamp: String
+    ) {
+        val date = getCurrentDate()
+
+        val data = mapOf(
+            lrn to mapOf(
+                "name" to name,
+                "literacy" to rating,
+                "timestamp" to timestamp
             )
-        }
+        )
+
+        firestore.collection("Filipino Scores")
+            .document(date)
+            .set(data, SetOptions.merge())
+            .await()
     }
 
-    suspend fun getStudentsFromRatingsCollection(): List<StudentRatings> {
-        val filipinoMap = getRatingsMap("Filipino Scores")
-        val mathMap = getRatingsMap("Math Scores")
+    // ====================== MATH ======================
 
-        // Combine both
-        filipinoMap.forEach { (lrn, filipinoRating) ->
-            mathMap[lrn]?.let { mathRating ->
-                mathMap[lrn] = mathRating.copy(literacy = filipinoRating.literacy)
-            } ?: run {
-                mathMap[lrn] = filipinoRating
+    suspend fun addStudentToMathCollection(
+        name: String,
+        lrn: String,
+        rating: String,
+        timestamp: String
+    ) {
+        val date = getCurrentDate()
+
+        val data = mapOf(
+            lrn to mapOf(
+                "name" to name,
+                "numeracy" to rating,
+                "timestamp" to timestamp
+            )
+        )
+
+        firestore.collection("Math Scores")
+            .document(date)
+            .set(data, SetOptions.merge())
+            .await()
+    }
+
+    // ====================== RATINGS ======================
+
+    fun listenToRatings(
+        date: String,
+        onUpdate: (List<StudentRatings>) -> Unit
+    ): List<ListenerRegistration> {
+
+        val filipinoMap = mutableMapOf<String, StudentRatings>()
+        val mathMap = mutableMapOf<String, StudentRatings>()
+
+        fun emit() {
+            val combined = mutableMapOf<String, StudentRatings>()
+
+            filipinoMap.forEach { (lrn, f) ->
+                val m = mathMap[lrn]
+                combined[lrn] = StudentRatings(
+                    name = f.name,
+                    lrn = lrn,
+                    literacy = f.literacy,
+                    numeracy = m?.numeracy ?: "",
+                    timestamp = f.timestamp
+                )
+            }
+
+            mathMap.forEach { (lrn, m) ->
+                if (!combined.containsKey(lrn)) {
+                    combined[lrn] = StudentRatings(
+                        name = m.name,
+                        lrn = lrn,
+                        literacy = "",
+                        numeracy = m.numeracy,
+                        timestamp = m.timestamp
+                    )
+                }
+            }
+
+            onUpdate(combined.values.toList())
+        }
+
+        val fRef = firestore.collection("Filipino Scores").document(date)
+        val mRef = firestore.collection("Math Scores").document(date)
+
+        fRef.get(Source.CACHE)
+        mRef.get(Source.CACHE)
+
+        val fListener = fRef.addSnapshotListener { snapshot, _ ->
+            CoroutineScope(Dispatchers.IO).launch {
+
+                filipinoMap.clear()
+                val sourceData = snapshot?.data ?: filipinoCache?.data
+
+                sourceData?.forEach { (lrn, value) ->
+                    val map = value as? Map<*, *> ?: return@forEach
+
+                    filipinoMap[lrn] = StudentRatings(
+                        name = map["name"] as? String ?: "",
+                        lrn = lrn,
+                        literacy = map["literacy"] as? String ?: "",
+                        numeracy = "",
+                        timestamp = map["timestamp"] as? String ?: ""
+                    )
+                }
+
+                if (snapshot != null && snapshot.exists()) {
+                    filipinoCache = snapshot
+                }
+
+                withContext(Dispatchers.Main) {
+                    emit()
+                }
             }
         }
 
-        return mathMap.values.toList()
+        val mListener = mRef.addSnapshotListener { snapshot, _ ->
+            CoroutineScope(Dispatchers.IO).launch {
+
+                mathMap.clear()
+                val sourceData = snapshot?.data ?: mathCache?.data
+
+                sourceData?.forEach { (lrn, value) ->
+                    val map = value as? Map<*, *> ?: return@forEach
+
+                    mathMap[lrn] = StudentRatings(
+                        name = map["name"] as? String ?: "",
+                        lrn = lrn,
+                        literacy = "",
+                        numeracy = map["numeracy"] as? String ?: "",
+                        timestamp = map["timestamp"] as? String ?: ""
+                    )
+                }
+
+                if (snapshot != null && snapshot.exists()) {
+                    mathCache = snapshot
+                }
+
+                withContext(Dispatchers.Main) {
+                    emit()
+                }
+            }
+        }
+
+        return listOf(fListener, mListener)
     }
 
-    private suspend fun getRatingsMap(collectionName: String): MutableMap<String, StudentRatings> {
-        return try {
-            val snapshot = firestore.collection(collectionName).get().await()
+    // ====================== EXISTENCE ======================
 
-            snapshot.documents.mapNotNull { doc ->
-                val name = doc.getString("name") ?: return@mapNotNull null
-                val lrn = doc.getString("lrn") ?: return@mapNotNull null
-                val rating = doc.getString("literacy") ?: doc.getString("numeracy") ?: ""
-                val timestamp = doc.getString("timestamp") ?: ""
+    suspend fun ensureDailyDocumentsExist() {
+        val date = getCurrentDate()
 
-                lrn to StudentRatings(name, lrn, rating, rating, timestamp)
-            }.toMap().toMutableMap()
-        } catch (e: Exception) {
-            Log.e("FirebaseHelper", "Error reading $collectionName", e)
-            mutableMapOf()
-        }
+        val batch = firestore.batch()
+
+        val feedingRef = firestore.collection("Feeding").document(date)
+        val measurementRef = firestore.collection("Measurements").document(date)
+        val filipinoRef = firestore.collection("Filipino Scores").document(date)
+        val mathRef = firestore.collection("Math Scores").document(date)
+
+        batch.set(feedingRef, emptyMap<String, Any>(), SetOptions.merge())
+        batch.set(measurementRef, emptyMap<String, Any>(), SetOptions.merge())
+        batch.set(filipinoRef, emptyMap<String, Any>(), SetOptions.merge())
+        batch.set(mathRef, emptyMap<String, Any>(), SetOptions.merge())
+
+        batch.commit().await()
     }
 }
